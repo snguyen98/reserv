@@ -1,0 +1,29 @@
+td .cell-content {
+    aspect-ratio: 1 / 1;
+}
+
+#content {
+    margin-top: 30px;
+}
+
+.content {
+    width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#schedule-table td:hover {
+    background-color: rgba(220, 220, 220, 0.768);
+}
+
+.schedule-card {
+    width: 50%;
+}
+
+#schedule-info {
+    margin-right: 15px;
+}
+
+.selected-cell {
+    outline: 2.5px solid black;
+}
