@@ -19,8 +19,7 @@
         </tr>
       </thead>
       <tbody>
-        {% set date_list = g.schedule.keys()|list %}
-        {% set book_list = g.schedule.values()|list %}
+        {% set date_list = g.schedule %}
         {% for i in range((date_list|length / 7)|round(method="ceil")|int) %}
           <tr>
             {% for j in range(7) %}

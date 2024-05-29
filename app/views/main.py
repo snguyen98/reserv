@@ -12,6 +12,9 @@ main_bp = Blueprint("main", __name__)
 def index():
     g.today = date.today()
     week_start = get_week_start(g.today)
+
+    g.schedule = [week_start + timedelta(days=i) for i in range(14)]
+    """
     list_days = [week_start + timedelta(days=i) for i in range(14)]
     schedule = dict.fromkeys(list_days)
     booked_days = get_schedule(list_days[0], list_days[-1])
@@ -21,7 +24,7 @@ def index():
         schedule[booked_date] = booked_day["userid"]
 
     g.schedule = schedule
-    
+    """
     return render_template('index.html')
 
 
