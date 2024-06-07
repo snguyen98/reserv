@@ -17,9 +17,10 @@ $(document).ready(function() {
                 console.info("Successfully booked date: " + selected_id);
                 updateSchedule();
             },
-            error: function(_, _, error) {
-                //alert(xhr.responseText);                      // For debugging purposes
-                console.error("Error booking date: " + selected_id + ", " + error);
+            error: function(xhr) {
+                message = JSON.parse(xhr.responseText).message;
+                alert(message);
+                console.error("Error booking date: " + selected_id + ", " + message);
             }
         });
     });
@@ -99,7 +100,8 @@ $(document).ready(function() {
             $("#info-booker").text(booker);
             $("#book-btn").hide();
 
-            if (today <= selected_date) {
+            // if (today <= selected_date) {
+            if (true) {
                 $("#cancel-btn").show();
             }
             else {
@@ -110,7 +112,8 @@ $(document).ready(function() {
             $("#info-booker").text(UNBOOKED_TEXT);
             $("#cancel-btn").hide();
 
-            if (today <= selected_date) {
+            // if (today <= selected_date) {
+            if (true) {
                 $("#book-btn").show();
             }
             else {
