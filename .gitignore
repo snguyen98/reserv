@@ -1,0 +1,5 @@
+# Ignore all log folders 
+logs/
+
+# Ignore pycache
+__pycache__/
