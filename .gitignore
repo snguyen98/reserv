@@ -3,3 +3,6 @@ logs/
 
 # Ignore pycache
 __pycache__/
+
+# Ignore database file
+app/data/schedule.db
