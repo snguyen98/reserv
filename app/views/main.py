@@ -2,7 +2,6 @@ from flask import render_template, Blueprint, g
 from flask_login import login_required
 from datetime import date, timedelta
 
-from ..data.db import get_db
 from .auth import login_required
 
 main_bp = Blueprint("main", __name__)
