@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Change Display Name{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+  {% from "form_helpers.html" import render_field %}
+  
+  <form method="post">
+    <dl>
+        {{ render_field(form.new_name) }}
+    </dl>
+    <p><input type="submit" value="Submit">
+  </form>
+{% endblock %}
