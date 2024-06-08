@@ -24,3 +24,7 @@ td .cell-content {
 .selected-cell {
     outline: 2.5px solid black;
 }
+
+.navbar {
+    height: 55px;
+}

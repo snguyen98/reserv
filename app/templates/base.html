@@ -1,23 +1,32 @@
-<!doctype html>
+<!DOCTYPE html>
 <title>Laundry Booking - {% block title %}{% endblock %}</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <head>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body>
   <nav class="navbar navbar-expand-sm navbar-light bg-light">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="{{ url_for('index') }}">Laundry Booking</a>
+    <div class="container-fluid collapse navbar-collapse">
+      <a class="navbar-brand" href="{{ url_for('index') }}"><i class="bi-house"></i></a>
       {% if g.user %}
-        <span class="navbar-text">{{ g.user['displayname'] }}</span>
-        <span class="navbar-toggler-icon"></span>
-        <!--
-        <a class="nav-link" href="{{ url_for('auth.logout') }}">Log Out</a>
-        -->
+        <div class="dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+            {{ g.user['displayname'] }}
+          </a>
+        
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('account.change_name') }}">Change Display Name</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('account.reset_password') }}">Reset Password</a></li>
+            <div class="dropdown-divider"></div>
+            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+          </ul>
+        </div>
       {% else %}
-        <a class="nav-link" href="{{ url_for('auth.login') }}">Log In</a>
+        <a class="nav-item nav-link" href="{{ url_for('auth.login') }}"><button class="btn btn-sm btn-outline-primary" type="button">Log In</button></a>
       {% endif %}
     </div>
   </nav>
