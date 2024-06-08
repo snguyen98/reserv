@@ -2,9 +2,9 @@ import functools
 
 from flask import Blueprint, request, session, g
 from flask import render_template, flash, redirect, url_for
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 from ..data.db import get_db
-from ..forms.reset_password_form import ResetPassword
+from ..forms.login_form import Login
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -41,29 +41,33 @@ def login():
     """
     Log in a registered user by adding the user id to the session
     """
-    if request.method == "POST":
-        user_id = request.form["user_id"]
-        password = request.form["password"]
-        db = get_db()
-        error = None
-        user = db.execute(
-            "SELECT * FROM user WHERE userid = ?", (user_id,)
-        ).fetchone()
+    form = Login(request.form)
 
-        if user is None:
-            error = "Incorrect User ID."
-        elif not check_password_hash(user["password"], password):
-            error = "Incorrect password."
+    if request.method == "POST" and form.validate():
+        try:
+            db = get_db()
+            user = db.execute("SELECT * FROM user WHERE userid = ?", (form.user_id.data,)).fetchone()
 
-        if error is None:
-            # store the user id in a new session and return to the index
-            session.clear()
-            session["user_id"] = user["userid"]
-            return redirect(url_for("index"))
+            error = None
 
-        flash(error)
+            if user is None:
+                error = "Incorrect User ID."
+            elif not check_password_hash(user["password"], form.password.data):
+                error = "Incorrect password."
 
-    return render_template("login.html")
+            if error is None:
+                # store the user id in a new session and return to the index
+                session.clear()
+                session["user_id"] = user["userid"]
+
+                return redirect(url_for("index"))
+
+            flash(error)
+
+        except Exception:
+            flash(f"Error logging in")
+        
+    return render_template("login.html", form=form)
 
 
 @auth_bp.route("/logout")
@@ -73,27 +77,3 @@ def logout():
     """
     session.clear()
     return redirect(url_for("auth.login"))
-
-
-@auth_bp.route("/reset_password", methods=['GET', 'POST'])
-def set_password():
-    """
-    Set user password based on form submission
-    """
-    form = ResetPassword(request.form)
-
-    if request.method == 'POST' and form.validate():
-        try:
-            hash_new_pass = generate_password_hash(form.new_pass.data)
-
-            db = get_db()
-            db.execute("UPDATE user SET password = ? WHERE userid = ? ", (hash_new_pass, (session.get("user_id"))))
-            db.commit()
-
-            flash("Password changed successfully")
-
-        except Exception:
-            flash(f"Error resetting password")
-        
-    return render_template('reset_password.html', form=form)
-    
