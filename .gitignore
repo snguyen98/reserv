@@ -6,3 +6,6 @@ __pycache__/
 
 # Ignore database file
 app/data/schedule.db
+
+# Ignore temp folder
+temp/
