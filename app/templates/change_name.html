@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Log In{% endblock %}</h1>
+  <h1>{% block title %}Change Display Name{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -9,9 +9,8 @@
   
   <form method="post">
     <dl>
-        {{ render_field(form.user_id) }}
-        {{ render_field(form.password) }}
+        {{ render_field(form.new_name) }}
     </dl>
-    <p><input type="submit" value="Login">
+    <p><input type="submit" value="Submit">
   </form>
 {% endblock %}

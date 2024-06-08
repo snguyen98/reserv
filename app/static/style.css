@@ -4,9 +4,6 @@ td .cell-content {
 
 #content {
     margin-top: 30px;
-}
-
-.content {
     width: 75%;
     margin-left: auto;
     margin-right: auto;
@@ -26,4 +23,8 @@ td .cell-content {
 
 .selected-cell {
     outline: 2.5px solid black;
+}
+
+.navbar {
+    height: 55px;
 }
