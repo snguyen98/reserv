@@ -8,6 +8,9 @@ $(document).ready(function() {
     $("#display-blank").show();
     $("#display-info").hide();
 
+    $("#upcoming-blank").show();
+    $("#upcoming-body").hide();
+
     $("#book-btn").on("click", function() {
         console.info("Booking date: " + selected_id)
         $.getJSON({
@@ -64,12 +67,23 @@ $(document).ready(function() {
     });
 
     function findNextBooking() {
+        var today = new Date();
+
         $('.schedule-cell').each(function() {
-            if ($(this).data("booker") != "" && $(this).data("booker") != null) {
+            var cell_date = new Date($(this).attr('id'));
+            
+            if (cell_date >= today && $(this).data("booker") != "" && $(this).data("booker") != null) {
                 $("#upcoming-date").text($(this).find(".cell-text").text());
                 $("#upcoming-booker").text($(this).data("booker"));
+
+                $("#upcoming-blank").hide();
+                $("#upcoming-body").show();
+
                 return false;                                   // Break out of for loop
             }
+
+            $("#upcoming-blank").show();
+            $("#upcoming-body").hide();
         });
     }
 
@@ -100,8 +114,7 @@ $(document).ready(function() {
             $("#info-booker").text(booker);
             $("#book-btn").hide();
 
-            // if (today <= selected_date) {
-            if (true) {
+            if (today <= selected_date) {
                 $("#cancel-btn").show();
             }
             else {
@@ -112,8 +125,7 @@ $(document).ready(function() {
             $("#info-booker").text(UNBOOKED_TEXT);
             $("#cancel-btn").hide();
 
-            // if (today <= selected_date) {
-            if (true) {
+            if (today <= selected_date) {
                 $("#book-btn").show();
             }
             else {
@@ -152,7 +164,7 @@ $(document).ready(function() {
             });
         });
         
-        var now = new Date;
+        var now = new Date();
         console.info(now.toLocaleDateString() + " " + now.toLocaleTimeString() + ": Schedule updated");
     }
 });
