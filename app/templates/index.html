@@ -43,22 +43,24 @@
     <div id="schedule-info" class="schedule-card card flex-fill">
       <div class="card-body">
         <div id="display-info">
-          <h5 id="info-title" class="card-title">No date selected</h5>
-          <p id="info-booker" class="card-text">Click or hover over a date to view more details</p>
+          <h5 id="info-title" class="card-title"></h5>
+          <p id="info-booker" class="card-text pt-2"></p>
           <button id="book-btn" type="button" class="btn btn-primary">Book</button>
           <button id="cancel-btn" type="button" class="btn btn-danger">Cancel</button>
         </div>
         <div id="display-blank">
           <h5 id="info-title" class="card-title">No date selected</h5>
-          <p id="info-booker" class="card-text">Click or hover over a date to view more details</p>
+          <p id="info-booker" class="card-text pt-2">Click or hover over a date to view more details</p>
         </div>
       </div>
     </div>
     <div id="schedule-upcoming" class="schedule-card card flex-fill">
       <div class="card-body">
         <h5 class="card-title">Upcoming</h5>
-        <p id="upcoming-date" class="card-text">Date</p>
-        <p id="upcoming-booker" class="card-text">Booker</p>
+        <p id="upcoming-body" class="card-text pt-2">
+          <span id="upcoming-date"></span><span> - </span><span id="upcoming-booker"></span>
+        </p>
+        <p id="upcoming-blank" class="card-text pt-2">No upcoming bookings</p>
       </div>
     </div>
   </div>
