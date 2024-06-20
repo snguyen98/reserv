@@ -12,7 +12,8 @@ $(document).ready(function() {
     $("#upcoming-body").hide();
 
     $("#book-btn").on("click", function() {
-        console.info("Booking date: " + selected_id)
+        console.info("Booking date: " + selected_id);
+        
         $.getJSON({
             url: "/handlers/set_booker",
             data: { "date": selected_id },
@@ -23,7 +24,9 @@ $(document).ready(function() {
             error: function(xhr) {
                 message = JSON.parse(xhr.responseText).message;
                 alert(message);
+                
                 console.error("Error booking date: " + selected_id + ", " + message);
+                updateSchedule();
             }
         });
     });
@@ -38,8 +41,11 @@ $(document).ready(function() {
                 updateSchedule();
             },
             error: function(_, _, error) {
-                //alert(xhr.responseText);                      // For debugging purposes
-                console.error("Error booking date: " + selected_id + ", " + error);
+                message = JSON.parse(xhr.responseText).message;
+                alert(message);
+
+                console.error("Error booking date: " + selected_id + ", " + message);
+                updateSchedule();
             }
         });
     });
@@ -157,9 +163,9 @@ $(document).ready(function() {
                     displaySelected();                              // Refreshes the info card
                     findNextBooking();                              // Refreshes the upcoming card
                 },
-                error: function(_, _, error) {
-                    //alert(xhr.responseText);                      // For debugging purposes
-                    console.error("Error retrieving booker data: " + error);
+                error: function(xhr) {
+                    message = JSON.parse(xhr.responseText).message;
+                    console.error("Error retrieving booker data: " + message);
                 }
             });
         });
