@@ -23,7 +23,6 @@ def change_name():
             db = get_db()
             db.execute("UPDATE user SET displayname = ? WHERE userid = ? ", (form.new_name.data, g.user["userid"]))
             db.commit()
-            close_connection_db()
 
             flash("Display name changed successfully")
 
@@ -37,6 +36,9 @@ def change_name():
             else:
                 flash("Unknown error changing display name")
                 logging.error(f"Error changing display name: {err}")
+
+        finally:
+            close_connection_db()
         
     return render_template('change_name.html', form=form)
 
@@ -56,7 +58,6 @@ def reset_password():
             db = get_db()
             db.execute("UPDATE user SET password = ? WHERE userid = ? ", (hash_new_pass, g.user["userid"]))
             db.commit()
-            close_connection_db()
 
             flash("Password changed successfully")
 
@@ -66,5 +67,8 @@ def reset_password():
             flash(f"Error resetting password")
 
             logging.error(f"Error resetting password: {err}")
+
+        finally:
+            close_connection_db()
         
     return render_template('reset_password.html', form=form)

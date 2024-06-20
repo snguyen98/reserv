@@ -21,7 +21,6 @@ def login():
         try:
             db = get_db()
             user = db.execute("SELECT * FROM user WHERE userid = ?", (form.user_id.data,)).fetchone()
-            close_connection_db()
 
             error = None
 
@@ -47,6 +46,9 @@ def login():
         except Exception as err:
             flash(f"Error logging in")
             logging.error(f"Error logging in: {err}")
+
+        finally:
+            close_connection_db()
         
     return render_template("login.html", form=form)
 
@@ -76,10 +78,16 @@ def load_logged_in_user():
         g.user = None
         
     else:
-        db = get_db()
-        g.user = db.execute("SELECT * FROM user WHERE userid = ?", (user_id,)).fetchone()
-        close_connection_db()
-        
+        try:
+            db = get_db()
+            g.user = db.execute("SELECT * FROM user WHERE userid = ?", (user_id,)).fetchone()
+
+        except Exception as err:
+            logging.error(f"Error retrieving user, {user_id} from database with error: {err}")
+
+        finally:
+            close_connection_db()
+
 
 def login_required(view):
     """
