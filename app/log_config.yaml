@@ -27,22 +27,22 @@ handlers:
 
 loggers:
     app:
-        level: DEBUG
+        level: INFO
         handlers: [file]
         propagate: no
 
     app.schedule:
-        level: DEBUG
+        level: INFO
         handlers: [file]
         propagate: no
 
     app.auth:
-        level: DEBUG
+        level: INFO
         handlers: [file]
         propagate: no
 
     app.account:
-        level: DEBUG
+        level: INFO
         handlers: [file]
         propagate: no
 
