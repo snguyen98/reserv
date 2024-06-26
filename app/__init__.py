@@ -1,18 +1,20 @@
 from flask import Flask
 import yaml
 import logging
+import logging.config
+import os
 
 def create_app():
-    import logging.config
+    cwd = os.path.abspath(os.getcwd())
     
-    with open("app/log_config.yaml", "rt") as f:
-        log_config = yaml.safe_load(f.read())
+    with open(f"{cwd}/app/config.yaml", "rt") as f:
+        config = yaml.safe_load(f.read())
 
-    logging.config.dictConfig(log_config)
+    logging.config.dictConfig(config["logging"])
 
     logging.info("Starting app...")
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = '90a9eee2f650fa61390458ae4b717e14503f7cbe26fabca850b67db78c73319b'
+    app.config['SECRET_KEY'] = config["app"]["keys"]["prod"]
     
     from .views.schedule import schedule_bp
     app.register_blueprint(schedule_bp)
