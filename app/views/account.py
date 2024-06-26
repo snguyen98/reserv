@@ -26,12 +26,12 @@ def change_name():
 
             flash("Display name changed successfully")
 
-            logging.info(f"Display name for {g.user["userid"]} to {form.new_name.data}")
+            logging.info(f"Display name for {g.user['userid']} to {form.new_name.data}")
 
         except Exception as err:
             if "UNIQUE constraint failed" in str(err):
                 flash(f"Error: Display name already exists")
-                logging.debug(f"Display name for {g.user["userid"]} was not changed, name provided already exists")
+                logging.debug(f"Display name for {g.user['userid']} was not changed, name provided already exists")
 
             else:
                 flash("Unknown error changing display name")
@@ -61,7 +61,7 @@ def reset_password():
 
             flash("Password changed successfully")
 
-            logging.info(f"Password changed for {g.user["userid"]} to {hash_new_pass}")
+            logging.info(f"Password changed for {g.user['userid']} to {hash_new_pass}")
 
         except Exception as err:
             flash(f"Error resetting password")

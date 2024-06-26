@@ -38,7 +38,7 @@ def set_booker():
     date_arg = request.args.get('date')
 
     if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
-        logging.debug(f"Date {date_arg} was not booked for {session.get("user_id")} as booking date is in the past")
+        logging.debug(f"Date {date_arg} was not booked for {session.get('user_id')} as booking date is in the past")
         return jsonify(message="Booking date cannot be in the past"), 403
 
     elif session.get("user_id") is None:
@@ -46,23 +46,23 @@ def set_booker():
         return jsonify(message="Not logged in"), 403
 
     elif not validate_booking(date_arg):
-        logging.debug(f"Date {date_arg} was not booked for {session.get("user_id")} as user has booked at least twice in a seven day period")
+        logging.debug(f"Date {date_arg} was not booked for {session.get('user_id')} as user has booked at least twice in a seven day period")
         return jsonify(message="Cannot book more than twice within a seven day period"), 403
 
     else:
         try:
             db = get_db()
-            db.execute("INSERT INTO schedule (date, userid) VALUES (?,?)", (date_arg, session.get("user_id")))
+            db.execute("INSERT INTO schedule (date, userid) VALUES (?,?)", (date_arg, session.get('user_id')))
             db.commit()
         
         except Exception as err:
-            logging.error(f"Error booking date {date_arg} for {session.get("user_id")} with error, {err}")
+            logging.error(f"Error booking date {date_arg} for {session.get('user_id')} with error, {err}")
             return jsonify(message=f"Error performing booking"), 400
         
         finally:
             close_connection_db()
         
-    logging.info(f"Successfully booked date {date_arg} for {session.get("user_id")}")
+    logging.info(f"Successfully booked date {date_arg} for {session.get('user_id')}")
 
     return jsonify(message="Booked"), 200
 
@@ -85,7 +85,7 @@ def cancel_booking():
                 return jsonify(success=True)
             
             else:
-                logging.debug(f"Booking on {date_arg} was not cancelled as logged in user {session.get("user_id")} did not match booked user {booked_user[0]}")
+                logging.debug(f"Booking on {date_arg} was not cancelled as logged in user {session.get('user_id')} did not match booked user {booked_user[0]}")
                 return jsonify(success=False)
         
         else:
