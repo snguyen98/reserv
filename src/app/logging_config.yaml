@@ -1,0 +1,51 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+    detailed:
+        format: '%(asctime)s    %(levelname)-8s    %(module)-16s    %(message)s'
+        datefmt: '%Y-%m-%d %H:%M:%S'
+
+filters:
+    consoleFilter:
+        "()": "app.ConsoleFilter"
+
+    webRequestFilter:
+        "()": "app.WebRequestFilter"
+
+handlers:
+    file:
+        class: logging.handlers.RotatingFileHandler
+        level: DEBUG
+        formatter: detailed
+        filename: app/logs/app.log
+        mode: a
+        maxBytes: 5242880
+        backupCount: 3
+        encoding: utf8
+        filters: [consoleFilter]
+
+loggers:
+    app:
+        level: INFO
+        handlers: [file]
+        propagate: no
+
+    app.schedule:
+        level: INFO
+        handlers: [file]
+        propagate: no
+
+    app.auth:
+        level: INFO
+        handlers: [file]
+        propagate: no
+
+    app.account:
+        level: INFO
+        handlers: [file]
+        propagate: no
+
+root:
+    level: DEBUG
+    handlers: [file]

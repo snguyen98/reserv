@@ -7,14 +7,22 @@ import os
 def create_app():
     cwd = os.path.abspath(os.getcwd())
     
-    with open(f"{cwd}/app/config.yaml", "rt") as f:
+    with open(f"{cwd}/app/logging_config.yaml", "rt") as f:
         config = yaml.safe_load(f.read())
 
-    logging.config.dictConfig(config["logging"])
+    logging.config.dictConfig(config)
 
     logging.info("Starting app...")
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = config["app"]["keys"]["prod"]
+    print(config["app"]["keys"]["prod"])
+
+    try:
+        with open(f"{cwd}/app/app.key", "r") as f:
+            app.config['SECRET_KEY'] = f.read()
+        
+    except:
+        logging.error("App key invalid or not found")
+        return
     
     from .views.schedule import schedule_bp
     app.register_blueprint(schedule_bp)
