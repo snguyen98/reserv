@@ -1,12 +1,13 @@
 from flask import render_template, Blueprint, g
 from flask_login import login_required
 from datetime import date, timedelta
+import logging
 
 from .auth import login_required
 
-main_bp = Blueprint("main", __name__)
+schedule_bp = Blueprint("schedule", __name__)
 
-@main_bp.route('/')
+@schedule_bp.route('/')
 @login_required
 def index():
     g.today = date.today()
@@ -14,11 +15,6 @@ def index():
 
     g.schedule = [week_start + timedelta(days=i) for i in range(14)]
 
+    logging.debug(f"Setting schedule for w/c {week_start}")
+
     return render_template('index.html')
-
-
-def print_schedule():
-    for key, val in g.schedule.items():
-        if val is None:
-            val = ""
-        print(key.strftime('%d/%m') + ": " + val)

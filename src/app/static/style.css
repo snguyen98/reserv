@@ -13,6 +13,11 @@ td .cell-content {
     background-color: rgba(220, 220, 220, 0.768);
 }
 
+#schedule-table {
+    border: 3px solid black;
+    box-sizing: border-box;
+}
+
 .schedule-card {
     width: 50%;
     height: 165px;
@@ -23,7 +28,8 @@ td .cell-content {
 }
 
 .selected-cell {
-    outline: 2.5px solid black;
+    outline: 2px solid black;
+    box-sizing: border-box;
 }
 
 .navbar {
