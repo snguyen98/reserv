@@ -5,7 +5,7 @@ logs/
 __pycache__/
 
 # Ignore database file
-app/data/schedule.db
+*.db*
 
 # Ignore temp folder
 temp/
