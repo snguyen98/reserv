@@ -7,5 +7,8 @@ __pycache__/
 # Ignore database file
 *.db*
 
+# Ignore key files
+*.key*
+
 # Ignore temp folder
 temp/
