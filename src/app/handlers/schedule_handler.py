@@ -18,19 +18,23 @@ def get_booker():
             booker_id = res_booker[0]
             res = db.execute("SELECT displayname FROM user WHERE userid = ?", (booker_id,)).fetchone()
 
-            logging.debug(f"Found booker with display name, {res[0]} for {date_arg}")
+            if not res[0] or res[0] == "":
+                logging.warning((f"No display name found for user, {booker_id}"))
 
-            return jsonify({"res": res[0]})
+            ret_val = jsonify(isBooked=True, booker=res[0])
+            logging.debug(f"Found booker with display name, {res[0]} for {date_arg}")
         
         else:
-            logging.debug(f"No booker found for {date_arg}")
-            return jsonify({"res": ""})
-        
+            logging.debug(f"No booker found for {date_arg}, displaying date as available")
+            ret_val = jsonify(isBooked=False, booker="")
+
     except Exception as err:
         logging.error(f"Error retrieving booker for {date_arg} with error: {err}")
+        ret_val = jsonify(isBooked=False, booker="")
 
     finally:
         close_connection_db()
+        return ret_val
     
 
 @schedule_handler_bp.route("/set_booker", methods=["GET"])
@@ -39,32 +43,33 @@ def set_booker():
 
     if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
         logging.debug(f"Date {date_arg} was not booked for {session.get('user_id')} as booking date is in the past")
-        return jsonify(message="Booking date cannot be in the past"), 403
+        ret_val = jsonify(message="Booking date cannot be in the past"), 403
 
     elif session.get("user_id") is None:
         logging.debug(f"Date {date_arg} was not booked as no user is logged in")
-        return jsonify(message="Not logged in"), 403
+        ret_val = jsonify(message="Not logged in"), 403
 
     elif not validate_booking(date_arg):
         logging.debug(f"Date {date_arg} was not booked for {session.get('user_id')} as user has booked at least twice in a seven day period")
-        return jsonify(message="Cannot book more than twice within a seven day period"), 403
+        ret_val = jsonify(message="Cannot book more than twice within a seven day period"), 403
+        logging.debug(ret_val)
 
     else:
         try:
             db = get_db()
             db.execute("INSERT INTO schedule (date, userid) VALUES (?,?)", (date_arg, session.get('user_id')))
             db.commit()
+
+            ret_val = jsonify(message="Booked"), 200
+            logging.info(f"Successfully booked date {date_arg} for {session.get('user_id')}")
         
         except Exception as err:
+            # This error should handle if the date is already booked as well as any other unexpected errors
             logging.error(f"Error booking date {date_arg} for {session.get('user_id')} with error, {err}")
-            return jsonify(message=f"Error performing booking"), 400
+            ret_val = jsonify(message="Something went wrong with this request"), 500
         
-        finally:
-            close_connection_db()
-        
-    logging.info(f"Successfully booked date {date_arg} for {session.get('user_id')}")
-
-    return jsonify(message="Booked"), 200
+    close_connection_db()
+    return ret_val
 
 
 @schedule_handler_bp.route("/cancel_booking", methods=["GET"])
@@ -82,21 +87,23 @@ def cancel_booking():
 
                 logging.info(f"Successfully cancelled booking by {booked_user[0]} on {date_arg}")
 
-                return jsonify(success=True)
+                ret_val = jsonify(message="Cancelled booking")
             
             else:
                 logging.debug(f"Booking on {date_arg} was not cancelled as logged in user {session.get('user_id')} did not match booked user {booked_user[0]}")
-                return jsonify(success=False)
+                ret_val = jsonify(message="Something went wrong with this request"), 500
         
         else:
-            logging.warning(f"No booker found on {date_arg}")
-            return jsonify(success=False)
-        
+            logging.warning(f"Could not cancel booking, no booker found on {date_arg}")
+            ret_val = jsonify(message="Something went wrong with this request"), 500
+
     except Exception as err:
-        logging.error(f"Error cancelling booking for {date_arg} with error: {err}")
+        logging.error(f"Error cancelling booking for {date_arg} with error: {err}"), 500
+        ret_val = jsonify(message="Something went wrong with this request"), 500
 
     finally:
         close_connection_db()
+        return ret_val
         
 
 def validate_booking(date_str: str) -> bool:

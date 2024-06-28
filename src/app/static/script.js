@@ -149,9 +149,10 @@ $(document).ready(function() {
                 data: { "date": cell_date },
                 success: function(data) {
                     var cell_id = "#" + cell_date;
-                    $(cell_id).data("booker", data.res);            // Sets custom html data attribute for booker
+                    
+                    $(cell_id).data("booker", data.booker);            // Sets custom html data attribute for booker
 
-                    if ($(cell_id).data("booker") != "") {
+                    if (data.isBooked) {
                         $(cell_id).addClass("table-danger");
                         $(cell_id).removeClass("table-success");
                     }
