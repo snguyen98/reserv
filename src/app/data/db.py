@@ -1,14 +1,12 @@
-import sqlite3
-from flask import g
-from flask import Flask
-import logging
+from flask import g, current_app
 
-DB_PATH = 'app/data/schedule.db'
+import sqlite3
+import logging
 
 def get_db():
     if "db" not in g:
         logging.debug("Opening connection to schedule database...")
-        g.db = sqlite3.connect(DB_PATH)
+        g.db = sqlite3.connect(current_app.config["DATABASE"])
         g.db.row_factory = sqlite3.Row
 
     return g.db

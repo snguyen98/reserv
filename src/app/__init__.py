@@ -5,25 +5,34 @@ import logging.config
 import os
 
 def create_app():
-    cwd = os.path.abspath(os.getcwd())
-    
-    with open(f"{cwd}/app/logging_config.yaml", "rt") as f:
+    app = Flask(__name__)
+
+    with open(os.path.join(app.root_path, "config.yaml"), "rt") as f:
         config = yaml.safe_load(f.read())
 
-    logging.config.dictConfig(config)
+    logging.config.dictConfig(config["logging"])
+    
+    key_path = os.path.join(app.root_path, config["key_path"])
 
-    logging.info("Starting app...")
-    app = Flask(__name__)
-    print(config["app"]["keys"]["prod"])
+    if not os.path.isfile(key_path):
+        from tools.generate_key import generate_key
+        generate_key()
 
     try:
-        with open(f"{cwd}/app/app.key", "r") as f:
-            app.config['SECRET_KEY'] = f.read()
-        
+        with open(key_path, "r") as f:
+            key = f.read()
+
     except:
         logging.error("App key invalid or not found")
         return
     
+    app.config.from_mapping(
+        SECRET_KEY = key,
+        DATABASE = os.path.join(app.root_path, config["db_path"])
+    )
+
+    logging.info("Started app")
+
     from .views.schedule import schedule_bp
     app.register_blueprint(schedule_bp)
     logging.info("Registered schedule view blueprint")
