@@ -1,4 +1,5 @@
 from flask import g, current_app
+from flask.cli import with_appcontext
 from werkzeug.security import generate_password_hash
 
 import sqlite3
@@ -23,7 +24,9 @@ def close_db(e=None):
 
 
 @click.command("init-db")
+@with_appcontext
 def init_db():
+    """ Initialises the database from schema file """
     db = get_db()
 
     with current_app.open_resource("data/schema.sql") as f:
@@ -36,7 +39,10 @@ def init_db():
 @click.argument("id")
 @click.argument("name")
 @click.argument("password")
+@with_appcontext
 def create_user(id, name, password):
+    """ Creates a new user """
+
     hash_password = generate_password_hash(password)
 
     try:
