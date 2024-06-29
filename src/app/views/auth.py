@@ -3,7 +3,7 @@ import functools
 from flask import Blueprint, request, session, g
 from flask import render_template, flash, redirect, url_for
 from werkzeug.security import check_password_hash
-from ..data.db import get_db, close_connection_db
+from ..data.db import get_db
 from ..forms.login_form import Login
 import logging
 
@@ -46,9 +46,6 @@ def login():
         except Exception as err:
             flash(f"Error logging in")
             logging.error(f"Error logging in: {err}")
-
-        finally:
-            close_connection_db()
         
     return render_template("login.html", form=form)
 
@@ -84,9 +81,6 @@ def load_logged_in_user():
 
         except Exception as err:
             logging.error(f"Error retrieving user, {user_id} from database with error: {err}")
-
-        finally:
-            close_connection_db()
 
 
 def login_required(view):

@@ -50,6 +50,9 @@ def create_app():
     logging.info("Registered schedule handler blueprint")
 
     app.add_url_rule("/", endpoint="index")
+
+    from .data.db import init_app
+    init_app(app)
     
     return app
 
