@@ -32,9 +32,30 @@ def init_db():
     click.echo("Initialised the database")
 
 
+@click.command("create-user")
+@click.argument("id")
+@click.argument("name")
+@click.argument("password")
+def create_user(id, name, password):
+    hash_password = generate_password_hash(password)
+
+    try:
+        db = get_db()
+        db.execute("INSERT INTO user (userid, displayname, password) VALUES (?,?,?)", (id, name, hash_password,))
+        db.commit()
+
+        click.echo(f"Successfully created user with ID {id}")
+        logging.info(f"Successfully created user with ID {id}")
+
+    except Exception as err:
+        click.echo(f"An error occurred when creating the user, {err}")
+        logging.error(f"Error creating user, {err}")
+
+
 def init_app(app):
     """Register database functions with the Flask app. This is called by
     the application factory.
     """
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db)
+    app.cli.add_command(create_user)
