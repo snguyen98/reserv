@@ -15,8 +15,8 @@ def create_app():
     key_path = os.path.join(app.root_path, config["key_path"])
 
     if not os.path.isfile(key_path):
-        from tools.generate_key import generate_key
-        generate_key()
+        from .tools.generate_key import generate_key
+        generate_key(key_path)
 
     try:
         with open(key_path, "r") as f:
