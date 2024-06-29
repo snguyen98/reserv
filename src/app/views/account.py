@@ -3,7 +3,7 @@ from flask import render_template, flash
 from werkzeug.security import generate_password_hash
 import logging
 
-from ..data.db import get_db, close_connection_db
+from ..data.db import get_db
 from ..forms.change_name_form import ChangeName
 from ..forms.reset_password_form import ResetPassword
 from .auth import login_required
@@ -36,9 +36,6 @@ def change_name():
             else:
                 flash("Unknown error changing display name")
                 logging.error(f"Error changing display name: {err}")
-
-        finally:
-            close_connection_db()
         
     return render_template('change_name.html', form=form)
 
@@ -67,8 +64,5 @@ def reset_password():
             flash(f"Error resetting password")
 
             logging.error(f"Error resetting password: {err}")
-
-        finally:
-            close_connection_db()
         
     return render_template('reset_password.html', form=form)
