@@ -5,14 +5,14 @@ import logging.config
 import os
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
 
-    with open(os.path.join(app.root_path, "config.yaml"), "rt") as f:
+    with app.open_instance_resource("config.yaml") as f:
         config = yaml.safe_load(f.read())
 
     logging.config.dictConfig(config["logging"])
     
-    key_path = os.path.join(app.root_path, config["key_path"])
+    key_path = os.path.join(app.instance_path, config["key_path"])
 
     if not os.path.isfile(key_path):
         from .tools.generate_key import generate_key
@@ -28,7 +28,7 @@ def create_app():
     
     app.config.from_mapping(
         SECRET_KEY = key,
-        DATABASE = os.path.join(app.root_path, config["db_path"])
+        DATABASE = os.path.join(app.instance_path, config["db_path"])
     )
 
     logging.info("Started app")
