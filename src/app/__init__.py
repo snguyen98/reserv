@@ -7,6 +7,12 @@ import os
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
 
+    try:
+        os.makedirs(app.instance_path)
+        
+    except OSError:
+        pass
+
     with app.open_instance_resource("config.yaml") as f:
         config = yaml.safe_load(f.read())
 
