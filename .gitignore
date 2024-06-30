@@ -12,3 +12,6 @@ __pycache__/
 
 # Ignore temp folder
 temp/
+
+# Ignore config file
+config.yaml
