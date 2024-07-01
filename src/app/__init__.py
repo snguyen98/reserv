@@ -7,17 +7,34 @@ import os
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
 
+    # Create instance folder if it doesn't exist
     try:
         os.makedirs(app.instance_path)
-        
+
     except OSError:
         pass
 
-    with app.open_instance_resource("config.yaml") as f:
+    config_path = os.path.join(app.instance_path, "config.yaml")
+
+    if not os.path.isfile(config_path):
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        config_path = os.path.join(current_dir, "config-default.yaml")
+
+    with open(config_path, "r") as f:
         config = yaml.safe_load(f.read())
 
+    # Create log folder if doesn't exist and configured to log to a file
+    try:
+        log_folder = os.path.dirname(config["logging"]["handlers"]["file"]["filename"])
+
+        if not os.path.exists(log_folder):
+            os.makedirs(log_folder)
+
+    except:
+        pass
+
     logging.config.dictConfig(config["logging"])
-    
+
     key_path = os.path.join(app.instance_path, config["key_path"])
 
     if not os.path.isfile(key_path):

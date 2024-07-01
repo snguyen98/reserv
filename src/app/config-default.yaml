@@ -1,0 +1,55 @@
+key_path: app.key
+db_path: data/schedule.db
+
+logging:
+    version: 1
+    disable_existing_loggers: False
+
+    formatters:
+        detailed:
+            format: "%(asctime)s    %(levelname)-8s    %(module)-16s    %(message)s"
+            datefmt: "%Y-%m-%d %H:%M:%S"
+
+    filters:
+        console_filter:
+            "()": "app.ConsoleFilter"
+
+        web_request_filter:
+            "()": "app.WebRequestFilter"
+
+    handlers:
+        file:
+            class: logging.handlers.RotatingFileHandler
+            level: DEBUG
+            formatter: detailed
+            mode: a
+            filename: instance/logs/app.log
+            maxBytes: 5242880
+            backupCount: 1
+            encoding: utf8
+            filters: [console_filter]
+
+    loggers:
+        app:
+            level: INFO
+            handlers: [file]
+            propagate: no
+
+        app.schedule:
+            level: INFO
+            handlers: [file]
+            propagate: no
+
+        app.auth:
+            level: INFO
+            handlers: [file]
+            propagate: no
+
+        app.account:
+            level: INFO
+            handlers: [file]
+            propagate: no
+
+    root:
+        level: DEBUG
+        handlers: [file]
