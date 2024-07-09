@@ -6,7 +6,7 @@ import shutil
 import logging
 
 # Define constants
-APP_NAME = "app"
+APP_NAME = "reserv"
 
 
 def create_backup(dest_path: str, backup_path: str, version: str, today: str):

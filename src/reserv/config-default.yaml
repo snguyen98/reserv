@@ -12,10 +12,10 @@ logging:
 
     filters:
         console_filter:
-            "()": "app.ConsoleFilter"
+            "()": "reserv.ConsoleFilter"
 
         web_request_filter:
-            "()": "app.WebRequestFilter"
+            "()": "reserv.WebRequestFilter"
 
     handlers:
         file:

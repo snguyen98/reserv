@@ -6,7 +6,7 @@ import logging
 import sys
 
 # Define constants
-APP_NAME = "app"
+APP_NAME = "reserv"
 
 
 def create_build(dest_path: str, src_path: str, temp_path: str):
