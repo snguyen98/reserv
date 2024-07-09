@@ -70,20 +70,14 @@ if args["backup"]:
     try:
         backup_folder = os.path.join(backup_path, f"app_{today}_{version}")
 
-        shutil.copytree(
-            dest_path,
-            backup_folder,
-            ignore=ignore_patterns,
-            dirs_exist_ok=False
-        )
-
+        shutil.copytree(dest_path, backup_folder, ignore=ignore_patterns, dirs_exist_ok=False)
         logging.info(f"Backed up currently deployed to {backup_folder}")
 
         shutil.rmtree(dest_path)
         logging.info("Cleared destination path for new release")
-        
+
     except Exception as err:
-        logging.error(f"Error: could not create backup, {err}")
+        logging.error(f"Could not create backup, {err}")
         sys.exit()
 
 else:
