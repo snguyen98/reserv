@@ -37,13 +37,13 @@ def get_booker():
 def set_booker():
     date_arg = request.args.get('date')
 
-    if session.get("user_id") is None:
-        logging.debug(f"Date {date_arg} was not booked as no user is logged in")
-        return jsonify(message="Not logged in"), 403
-
-    elif datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
+    if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
         logging.debug(f"Date {date_arg} was not booked for {session.get('user_id')} as booking date is in the past")
         return jsonify(message="Booking date cannot be in the past"), 403
+
+    elif session.get("user_id") is None:
+        logging.debug(f"Date {date_arg} was not booked as no user is logged in")
+        return jsonify(message="Not logged in"), 403
 
     elif not validate_booking(date_arg):
         logging.debug(f"Date {date_arg} was not booked for {session.get('user_id')} as user has booked at least twice in a seven day period")
@@ -68,39 +68,30 @@ def set_booker():
 def cancel_booking():
     date_arg = request.args.get('date')
 
-    if session.get("user_id") is None:
-        logging.debug(f"Date {date_arg} was not cancelled as no user is logged in")
-        return jsonify(message="Not logged in"), 403
-    
-    elif datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
-        logging.debug(f"Date {date_arg} was not cancelled for {session.get('user_id')} as cancel date is in the past")
-        return jsonify(message="Cancel date cannot be in the past"), 403
-    
-    else:
-        try:
-            db = get_db()
-            booked_user = db.execute("SELECT userid FROM schedule WHERE date = ?", (date_arg,)).fetchone()
+    try:
+        db = get_db()
+        booked_user = db.execute("SELECT userid FROM schedule WHERE date = ?", (date_arg,)).fetchone()
 
-            if booked_user:
-                if session.get("user_id") == booked_user[0]:
-                    db.execute("DELETE FROM schedule WHERE date = ?", (date_arg,))
-                    db.commit()
+        if booked_user:
+            if session.get("user_id") == booked_user[0]:
+                db.execute("DELETE FROM schedule WHERE date = ?", (date_arg,))
+                db.commit()
 
-                    logging.info(f"Successfully cancelled booking by {booked_user[0]} on {date_arg}")
-                    return jsonify(message="Cancelled booking")
-                
-                else:
-                    logging.debug(f"Booking on {date_arg} was not cancelled as logged in user {session.get('user_id')} did not match booked user {booked_user[0]}")
-                    return jsonify(message="Something went wrong with this request"), 500
+                logging.info(f"Successfully cancelled booking by {booked_user[0]} on {date_arg}")
+                return jsonify(message="Cancelled booking")
             
             else:
-                logging.warning(f"Could not cancel booking, no booker found on {date_arg}")
+                logging.debug(f"Booking on {date_arg} was not cancelled as logged in user {session.get('user_id')} did not match booked user {booked_user[0]}")
                 return jsonify(message="Something went wrong with this request"), 500
-
-        except Exception as err:
-            logging.error(f"Error cancelling booking for {date_arg} with error: {err}"), 500
+        
+        else:
+            logging.warning(f"Could not cancel booking, no booker found on {date_arg}")
             return jsonify(message="Something went wrong with this request"), 500
-            
+
+    except Exception as err:
+        logging.error(f"Error cancelling booking for {date_arg} with error: {err}"), 500
+        return jsonify(message="Something went wrong with this request"), 500
+        
 
 def validate_booking(date_str: str) -> bool:
     date = datetime.strptime(date_str, "%Y-%m-%d").date()
