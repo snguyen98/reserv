@@ -114,12 +114,13 @@ def generate_ignore_patterns():
 
 def clear_working_folders(paths: list):
     """
-    Deletes each folder in the supplied list if it exists
+    Deletes each folder in the supplied list if it exists and create a new temp folder
 
     Params
     ------
     paths       A list of paths to remove
     """
+    # Delete the folders
     for path in paths:
         try:
             shutil.rmtree(path)
@@ -138,12 +139,13 @@ def clear_working_folders(paths: list):
 
 def configure_log(log_path):
     """
-    Attempt to create the log directory if it doesn't already exist
+    Sets up directories and basic configuration for logging
 
     Params
     ------
     log_path        The path where the log file should be created
     """
+    # Attempt to create the log directory if it doesn't already exist
     try:
         os.makedirs(log_path)
     except:
