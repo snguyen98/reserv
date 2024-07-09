@@ -5,6 +5,9 @@ import os
 import logging
 import sys
 
+# Define constants
+APP_NAME = "app"
+
 def get_version(src_path: str) -> str:
     """
     Get the version of the app to build
@@ -13,7 +16,7 @@ def get_version(src_path: str) -> str:
     ------
     src_path        The path of the src folder
     """
-    version_path = os.path.join(src_path, "app/version.txt")
+    version_path = os.path.join(src_path, f"{APP_NAME}/version.txt")
 
     try:
         with open(version_path, "rt") as f:
@@ -38,10 +41,10 @@ def create_build(dest_path, src_path, temp_path):
     """
     try:
         shutil.copytree(src_path, dest_path, ignore=generate_ignore_patterns())
-        shutil.make_archive(base_name=os.path.join(temp_path, "app"), format="zip", root_dir=os.path.join(dest_path, "app"))
+        shutil.make_archive(base_name=os.path.join(temp_path, APP_NAME), format="zip", root_dir=os.path.join(dest_path, APP_NAME))
         logging.info(f"Created build for version {version}")
 
-        shutil.rmtree(os.path.join(dest_path, "app"))
+        shutil.rmtree(os.path.join(dest_path, APP_NAME))
         logging.info(f"Deleted temporary copy of app in {dest_path}")
 
     except Exception as err:
@@ -61,7 +64,7 @@ def create_release(dest_path, temp_path, script_path, version):
     """
     try:
         shutil.copy(script_path, temp_path)
-        shutil.make_archive(base_name=os.path.join(dest_path, f"app-release-{version}"), format="zip", root_dir=temp_path)
+        shutil.make_archive(base_name=os.path.join(dest_path, f"{APP_NAME}-release-{version}"), format="zip", root_dir=temp_path)
         logging.info(f"Created app release for version {version}")
 
         shutil.rmtree(temp_path)
@@ -83,7 +86,7 @@ def generate_readme(dest_path):
     try:
         with open(readme_path, "w") as file:
             file.write("Instructions for deployment:\n")
-            file.write("1. Copy file app-release-[version].zip from the releases folder to your environment.\n")
+            file.write(f"1. Copy file {APP_NAME}-release-[version].zip from the releases folder to your environment.\n")
             file.write("2. Unzip the contents.")
             file.write("3. Using bash or command prompt, navigate to the directory of the unzipped contents.\n")
             file.write("4. Run the script deploy.py. Use 'python deploy.py --help' to see the list of supplied arguments. This script will:\n")
