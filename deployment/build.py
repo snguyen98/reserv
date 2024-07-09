@@ -8,28 +8,8 @@ import sys
 # Define constants
 APP_NAME = "app"
 
-def get_version(src_path: str) -> str:
-    """
-    Get the version of the app to build
 
-    Params
-    ------
-    src_path        The path of the src folder
-    """
-    version_path = os.path.join(src_path, f"{APP_NAME}/version.txt")
-
-    try:
-        with open(version_path, "rt") as f:
-            version = f.read()
-
-        logging.info(f"Found version {version} of app to build")
-        return version
-
-    except Exception as err:
-        logging.error(f"No app found or version file cannot be read, {err}")
-        return None
-
-def create_build(dest_path, src_path, temp_path):
+def create_build(dest_path: str, src_path: str, temp_path: str):
     """
     Create a copy of the current app, excluding the ignore patterns and archive into a zip file
 
@@ -51,7 +31,7 @@ def create_build(dest_path, src_path, temp_path):
         logging.error(f"Could not create a zipped archive of the app, {err}")
         sys.exit()
 
-def create_release(dest_path, temp_path, script_path, version):
+def create_release(dest_path: str, temp_path: str, script_path: str, version: str):
     """
     Copy deploy script to temp folder and archive into a zip file with the build
 
@@ -74,7 +54,29 @@ def create_release(dest_path, temp_path, script_path, version):
         logging.warning(f"Error creating zipped archive for release, {err}")
 
 
-def generate_readme(dest_path):
+def get_version(src_path: str) -> str:
+    """
+    Get the version of the app to build
+
+    Params
+    ------
+    src_path        The path of the src folder
+    """
+    version_path = os.path.join(src_path, f"{APP_NAME}/version.txt")
+
+    try:
+        with open(version_path, "rt") as f:
+            version = f.read()
+
+        logging.info(f"Found version {version} of app to build")
+        return version
+
+    except Exception as err:
+        logging.error(f"No app found or version file cannot be read, {err}")
+        return None
+    
+
+def generate_readme(dest_path: str):
     """
     Generate readme instructions for deployment
     Params
@@ -99,20 +101,6 @@ def generate_readme(dest_path):
 
     except Exception as err:
         logging.warning(f"Could not create readme file, {err}")
-
-
-def generate_ignore_patterns():
-    """
-    Define files and folders to ignore when copying
-    """
-    ignore_patterns = shutil.ignore_patterns(
-        "__pycache__",
-        "instance",
-        "*.key",
-        "*.db",
-        "config.yaml"
-    )
-    return ignore_patterns
 
 
 def clear_working_folders(paths: list):
@@ -140,7 +128,21 @@ def clear_working_folders(paths: list):
         sys.exit()
 
 
-def configure_log(log_path):
+def generate_ignore_patterns():
+    """
+    Define files and folders to ignore when copying
+    """
+    ignore_patterns = shutil.ignore_patterns(
+        "__pycache__",
+        "instance",
+        "*.key",
+        "*.db",
+        "config.yaml"
+    )
+    return ignore_patterns
+
+
+def configure_log(log_path: str):
     """
     Sets up directories and basic configuration for logging
 
@@ -156,7 +158,7 @@ def configure_log(log_path):
 
     # Set the log file to include today's date
     today = datetime.today().strftime('%Y%m%d')
-    log_path = os.path.join(log_path, f"deploy_{today}.log")
+    log_path = os.path.join(log_path, f"build_{today}.log")
 
     # Configure logging
     logging.basicConfig(filename=log_path, encoding="utf-8", level=logging.DEBUG, format="%(asctime)s    %(levelname)-8s    %(message)s")
@@ -183,9 +185,9 @@ if __name__ == "__main__":
     src_path = args["src"]
     log_path = args["log"]
 
-    configure_log(log_path=log_path)
+    configure_log(log_path)
 
-    version = get_version(src_path=src_path)
+    version = get_version(src_path)
 
     if version is not None:
         # Add the app version to the destination path
