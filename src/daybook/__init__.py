@@ -5,14 +5,37 @@ import logging.config
 import os
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
 
-    with open(os.path.join(app.root_path, "config.yaml"), "rt") as f:
+    # Create instance folder if it doesn't exist
+    try:
+        os.makedirs(app.instance_path)
+
+    except OSError:
+        pass
+
+    config_path = os.path.join(app.instance_path, "config.yaml")
+
+    if not os.path.isfile(config_path):
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        config_path = os.path.join(current_dir, "config-default.yaml")
+
+    with open(config_path, "r") as f:
         config = yaml.safe_load(f.read())
 
+    # Create log folder if doesn't exist and configured to log to a file
+    try:
+        log_folder = os.path.dirname(config["logging"]["handlers"]["file"]["filename"])
+
+        if not os.path.exists(log_folder):
+            os.makedirs(log_folder)
+
+    except:
+        pass
+
     logging.config.dictConfig(config["logging"])
-    
-    key_path = os.path.join(app.root_path, config["key_path"])
+
+    key_path = os.path.join(app.instance_path, config["key_path"])
 
     if not os.path.isfile(key_path):
         from .tools.generate_key import generate_key
@@ -28,7 +51,7 @@ def create_app():
     
     app.config.from_mapping(
         SECRET_KEY = key,
-        DATABASE = os.path.join(app.root_path, config["db_path"])
+        DATABASE = os.path.join(app.instance_path, config["db_path"])
     )
 
     logging.info("Started app")
