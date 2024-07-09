@@ -5,8 +5,14 @@ import os
 import logging
 import sys
 
-def get_version(src_path) -> str:
-    # Get the version of the app to build
+def get_version(src_path: str) -> str:
+    """
+    Get the version of the app to build
+
+    Params
+    ------
+    src_path        The path of the src folder
+    """
     version_path = os.path.join(src_path, "app/version.txt")
 
     try:
@@ -21,7 +27,15 @@ def get_version(src_path) -> str:
         return None
 
 def create_build(dest_path, src_path, temp_path):
-    # Attempt to create a copy of the current app, excluding the ignore patterns and archive into a zip file
+    """
+    Create a copy of the current app, excluding the ignore patterns and archive into a zip file
+
+    Params
+    ------
+    dest_path       The path where the release will be saved
+    src_path        The path of the src folder
+    temp_path       The path of the temporary working directory
+    """
     try:
         shutil.copytree(src_path, dest_path, ignore=generate_ignore_patterns())
         shutil.make_archive(base_name=os.path.join(temp_path, "app"), format="zip", root_dir=os.path.join(dest_path, "app"))
@@ -34,10 +48,19 @@ def create_build(dest_path, src_path, temp_path):
         logging.error(f"Could not create a zipped archive of the app, {err}")
         sys.exit()
 
-def create_release(dest_path, temp_path, deploy_script_path, version):
-    # Copy deploy script to temp folder and archive into a zip file with the build
+def create_release(dest_path, temp_path, script_path, version):
+    """
+    Copy deploy script to temp folder and archive into a zip file with the build
+
+    Params
+    ------
+    dest_path       The path where the release will be saved
+    temp_path       The path of the temporary working directory
+    script_path     The path of the deploy.py script
+    version         The version of the build
+    """
     try:
-        shutil.copy(deploy_script_path, temp_path)
+        shutil.copy(script_path, temp_path)
         shutil.make_archive(base_name=os.path.join(dest_path, f"app-release-{version}"), format="zip", root_dir=temp_path)
         logging.info(f"Created app release for version {version}")
 
@@ -49,7 +72,12 @@ def create_release(dest_path, temp_path, deploy_script_path, version):
 
 
 def generate_readme(dest_path):
-    # Generate readme instructions for deployment
+    """
+    Generate readme instructions for deployment
+    Params
+    ------
+    dest_path       The path where the release will be saved
+    """
     readme_path = os.path.join(dest_path, "readme.txt")
 
     try:
@@ -71,7 +99,9 @@ def generate_readme(dest_path):
 
 
 def generate_ignore_patterns():
-    # Define files and folders to ignore when copying
+    """
+    Define files and folders to ignore when copying
+    """
     ignore_patterns = shutil.ignore_patterns(
         "__pycache__",
         "instance",
@@ -83,7 +113,13 @@ def generate_ignore_patterns():
 
 
 def clear_working_folders(paths: list):
-    # Deletes each folder in the supplied list if it exists
+    """
+    Deletes each folder in the supplied list if it exists
+
+    Params
+    ------
+    paths       A list of paths to remove
+    """
     for path in paths:
         try:
             shutil.rmtree(path)
@@ -101,7 +137,13 @@ def clear_working_folders(paths: list):
 
 
 def configure_log(log_path):
-    # Attempt to create the log directory if it doesn't already exist
+    """
+    Attempt to create the log directory if it doesn't already exist
+
+    Params
+    ------
+    log_path        The path where the log file should be created
+    """
     try:
         os.makedirs(log_path)
     except:
@@ -132,7 +174,7 @@ if __name__ == "__main__":
 
     # Define paths to directories
     temp_path = os.path.join(current_dir, "temp")
-    deploy_script_path = os.path.join(current_dir, "deploy.py")
+    script_path = os.path.join(current_dir, "deploy.py")
     src_path = args["src"]
     log_path = args["log"]
 
@@ -146,5 +188,5 @@ if __name__ == "__main__":
 
         clear_working_folders([dest_path, temp_path])
         create_build(dest_path=dest_path, src_path=src_path, temp_path=temp_path)
-        create_release(dest_path=dest_path, deploy_script_path=deploy_script_path, temp_path=temp_path, version=version)
+        create_release(dest_path=dest_path, script_path=script_path, temp_path=temp_path, version=version)
         generate_readme(dest_path)
