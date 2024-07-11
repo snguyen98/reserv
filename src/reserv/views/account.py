@@ -3,7 +3,7 @@ from flask import render_template, flash
 from werkzeug.security import generate_password_hash
 import logging
 
-from ..data.db import get_db
+from ..data.query import update_name, update_password
 from ..forms.change_name_form import ChangeName
 from ..forms.reset_password_form import ResetPassword
 from .auth import login_required
@@ -23,9 +23,7 @@ def change_name():
     # Processes the form data if form passes validation and POST request is made
     if request.method == 'POST' and form.validate():
         try:
-            db = get_db()
-            db.execute("UPDATE user SET displayname = ? WHERE userid = ? ", (new_name, current_user))
-            db.commit()
+            update_name(id=current_user, name=new_name)
 
             flash("Display name changed successfully")
 
@@ -58,10 +56,7 @@ def reset_password():
     if request.method == 'POST' and form.validate():
         try:
             hash_pass = generate_password_hash(form.new_pass.data)
-
-            db = get_db()
-            db.execute("UPDATE user SET password = ? WHERE userid = ? ", (hash_pass, current_user))
-            db.commit()
+            update_password(id=current_user, password=hash_pass)
 
             flash("Password changed successfully")
 
