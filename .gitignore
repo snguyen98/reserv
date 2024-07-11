@@ -1,0 +1,20 @@
+# Ignore all log folders 
+logs/
+
+# Ignore pycache
+__pycache__/
+
+# Ignore database file
+*.db*
+
+# Ignore key files
+*.key*
+
+# Ignore temp folder
+temp/
+
+# Ignore config file
+config.yaml
+
+# Ignore instance folder
+instance/
