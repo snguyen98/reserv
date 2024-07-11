@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, g
+from flask import Blueprint, request, g
 from flask import render_template, flash
 from werkzeug.security import generate_password_hash
 import logging
@@ -17,21 +17,26 @@ def change_name():
     Change user display name based on form submission
     """
     form = ChangeName(request.form)
+    current_user = g.user["userid"]
+    new_name = form.new_name.data
 
+    # Processes the form data if form passes validation and POST request is made
     if request.method == 'POST' and form.validate():
         try:
             db = get_db()
-            db.execute("UPDATE user SET displayname = ? WHERE userid = ? ", (form.new_name.data, g.user["userid"]))
+            db.execute("UPDATE user SET displayname = ? WHERE userid = ? ", (new_name, current_user))
             db.commit()
 
             flash("Display name changed successfully")
 
-            logging.info(f"Display name for {g.user['userid']} to {form.new_name.data}")
+            logging.info(f"Display name for {current_user} to {new_name}")
 
         except Exception as err:
+            # Displays corresponding error to the page
             if "UNIQUE constraint failed" in str(err):
                 flash(f"Error: Display name already exists")
-                logging.debug(f"Display name for {g.user['userid']} was not changed, name provided already exists")
+                logging.debug(f"Display name for {current_user} was not " 
+                              "changed, name provided already exists")
 
             else:
                 flash("Unknown error changing display name")
@@ -47,18 +52,20 @@ def reset_password():
     Reset user password based on form submission
     """
     form = ResetPassword(request.form)
+    current_user = g.user["userid"]
 
+    # Processes the form data if form passes validation and POST request is made
     if request.method == 'POST' and form.validate():
         try:
-            hash_new_pass = generate_password_hash(form.new_pass.data)
+            hash_pass = generate_password_hash(form.new_pass.data)
 
             db = get_db()
-            db.execute("UPDATE user SET password = ? WHERE userid = ? ", (hash_new_pass, g.user["userid"]))
+            db.execute("UPDATE user SET password = ? WHERE userid = ? ", (hash_pass, current_user))
             db.commit()
 
             flash("Password changed successfully")
 
-            logging.info(f"Password changed for {g.user['userid']} to {hash_new_pass}")
+            logging.info(f"Password changed for {current_user} to {hash_pass}")
 
         except Exception as err:
             flash(f"Error resetting password")

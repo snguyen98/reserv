@@ -7,6 +7,9 @@ import logging
 import click
 
 def get_db():
+    """
+    Establishes a connection to the database and attaches it to g
+    """
     if "db" not in g:
         logging.debug("Opening connection to schedule database...")
         g.db = sqlite3.connect(current_app.config["DATABASE"])
@@ -16,6 +19,9 @@ def get_db():
 
 
 def close_db(e=None):
+    """
+    Closes the connection to the database and removes it from g
+    """
     db = g.pop("db", None)
 
     if db is not None:
@@ -26,7 +32,9 @@ def close_db(e=None):
 @click.command("init-db")
 @with_appcontext
 def init_db():
-    """ Initialises the database from schema file """
+    """
+    Defines a click command that initialises the database from schema file
+    """
     db = get_db()
 
     with current_app.open_resource("data/schema.sql") as f:
@@ -41,8 +49,15 @@ def init_db():
 @click.argument("password")
 @with_appcontext
 def create_user(id, name, password):
-    """ Creates a new user """
+    """
+    Defines a click command to create a new user to the database
 
+    Params
+    ------
+    id              The user id of the user
+    name            The display name of the user
+    password        The password of the user
+    """
     hash_password = generate_password_hash(password)
 
     try:
@@ -59,8 +74,12 @@ def create_user(id, name, password):
 
 
 def init_app(app):
-    """Register database functions with the Flask app. This is called by
-    the application factory.
+    """
+    Registers database functions with the Flask app
+
+    Params
+    ------
+    app         The Flask app to register to
     """
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db)
