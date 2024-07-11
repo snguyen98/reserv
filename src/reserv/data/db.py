@@ -43,6 +43,19 @@ def init_db():
     click.echo("Initialised the database")
 
 
+def init_app(app):
+    """
+    Registers database functions with the Flask app
+
+    Params
+    ------
+    app         The Flask app to register to
+    """
+    app.teardown_appcontext(close_db)
+    app.cli.add_command(init_db)
+    app.cli.add_command(create_user)
+
+
 @click.command("create-user")
 @click.argument("id")
 @click.argument("name")
@@ -61,9 +74,7 @@ def create_user(id, name, password):
     hash_password = generate_password_hash(password)
 
     try:
-        db = get_db()
-        db.execute("INSERT INTO user (userid, displayname, password) VALUES (?,?,?)", (id, name, hash_password,))
-        db.commit()
+        add_user(id=id, name=name, hash_password=hash_password)
 
         click.echo(f"Successfully created user with ID {id}")
         logging.info(f"Successfully created user with ID {id}")
@@ -73,14 +84,8 @@ def create_user(id, name, password):
         logging.error(f"Error creating user, {err}")
 
 
-def init_app(app):
-    """
-    Registers database functions with the Flask app
-
-    Params
-    ------
-    app         The Flask app to register to
-    """
-    app.teardown_appcontext(close_db)
-    app.cli.add_command(init_db)
-    app.cli.add_command(create_user)
+def add_user(id: str, name: str, hash_password: str):
+    query = "INSERT INTO user (userid, displayname, password) VALUES (?,?,?)"
+    db = get_db()
+    db.execute(query, (id, name, hash_password,))
+    db.commit()
