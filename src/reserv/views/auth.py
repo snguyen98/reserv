@@ -13,31 +13,36 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 @auth_bp.route("/login", methods=("GET", "POST"))
 def login():
     """
-    Log in a registered user by adding the user id to the session
+    Logs in a registered user by adding the user id to the session
     """
     form = Login(request.form)
+    user_id = form.user_id.data
+    password = form.password.data
 
+    # Processes the form data if form passes validation and POST request is made
     if request.method == "POST" and form.validate():
         try:
             db = get_db()
-            user = db.execute("SELECT * FROM user WHERE userid = ?", (form.user_id.data,)).fetchone()
-
+            user = db.execute("SELECT * FROM user WHERE userid = ?", (user_id,)).fetchone()
             error = None
 
+            # Checks if the user id matches a user in the database
             if user is None:
                 error = "Incorrect User ID."
-                logging.debug(f"User ID, {form.user_id.data} not found in database")
+                logging.debug(f"User ID, {user_id} not found in database")
 
-            elif not check_password_hash(user["password"], form.password.data):
+            # Checks if the supplied password matches the encrypted password
+            elif not check_password_hash(user["password"], password):
                 error = "Incorrect password."
-                logging.debug(f"Password provided for {form.user_id.data} does not match the value in the database")
+                logging.debug(f"Password provided for {user_id} does not " 
+                              "match the value in the database")
 
             if error is None:
-                # store the user id in a new session and return to the index
+                # Stores the user id in a new session and return to the index
                 session.clear()
                 session["user_id"] = user["userid"]
 
-                logging.info(f"Logging in as {form.user_id.data}...")
+                logging.info(f"Logging in as {user_id}...")
 
                 return redirect(url_for("index"))
 
@@ -66,8 +71,8 @@ def logout():
 @auth_bp.before_app_request
 def load_logged_in_user():
     """
-    If a user id is stored in the session, load the user object from
-    the database into g.user
+    If a user id is stored in the session, load the user object from the 
+    database into g.user
     """
     user_id = session.get("user_id")
 
@@ -80,7 +85,8 @@ def load_logged_in_user():
             g.user = db.execute("SELECT * FROM user WHERE userid = ?", (user_id,)).fetchone()
 
         except Exception as err:
-            logging.error(f"Error retrieving user, {user_id} from database with error: {err}")
+            logging.error(f"Error retrieving user, {user_id} from database " 
+                          f"with error: {err}")
 
 
 def login_required(view):

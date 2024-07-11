@@ -19,6 +19,7 @@
         </tr>
       </thead>
       <tbody>
+        <!-- Loops through the dates in g.schedule to generate the table -->
         {% set date_list = g.schedule %}
         {% for i in range((date_list|length / 7)|round(method="ceil")|int) %}
           <tr>
@@ -27,6 +28,7 @@
               <td id={{ date_list[index] }} class="schedule-cell" data-booker="">
                 <div class="cell-content">
                   <p class="cell-text">
+                    <!-- Highlights today's date in bold -->
                     {% if g.today == date_list[index] %}<strong>{% endif %}
                       {{ date_list[index].strftime('%d %b') }}
                     {% if g.today == date_list[index] %}</strong>{% endif %}

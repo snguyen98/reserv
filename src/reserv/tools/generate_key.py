@@ -2,6 +2,13 @@ import secrets
 import logging
 
 def generate_key(key_path):
+    """
+    Generates a new app key to the given file path
+
+    Params
+    ------
+    key_path        The path to save the newly generated key
+    """
     try:
         with open(key_path, 'x') as f:
             f.write(secrets.token_hex())
