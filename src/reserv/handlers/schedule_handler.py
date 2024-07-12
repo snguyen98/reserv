@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify, session
 from datetime import date, datetime, timedelta
 import logging
 
-from ..data.db import get_db
+from ..data.query import get_user_by_date, get_name_by_id
+from ..data.query import create_booking, remove_booking, get_bookings_by_params
 
 schedule_handler_bp = Blueprint(
     "schedule_handler",
@@ -19,12 +20,11 @@ def get_booker():
     date_arg = request.args.get('date')
 
     try:
-        db = get_db()
-        res_booker = db.execute("SELECT userid FROM schedule WHERE date = ?", (date_arg,)).fetchone()
+        res_booker = get_user_by_date(date_arg)
 
         if res_booker:
             booker_id = res_booker[0]
-            res = db.execute("SELECT displayname FROM user WHERE userid = ?", (booker_id,)).fetchone()
+            res = get_name_by_id(booker_id)
 
             if not res[0] or res[0] == "":
                 logging.warning(f"No display name found for user, {booker_id}")
@@ -68,9 +68,7 @@ def set_booker():
 
     else:
         try:
-            db = get_db()
-            db.execute("INSERT INTO schedule (date, userid) VALUES (?,?)", (date_arg, session.get('user_id')))
-            db.commit()
+            create_booking(date=date_arg, id=current_user)
 
             logging.info(f"Booked date {date_arg} for {current_user}")
             return jsonify(message="Booked"), 200
@@ -92,7 +90,7 @@ def cancel_booking():
     current_user = session.get('user_id')
 
     # Checks if the date can be cancelled first
-    if session.get("user_id") is None:
+    if current_user is None:
         logging.debug(f"Date {date_arg} was not cancelled, no user logged in")
         return jsonify(message="Not logged in"), 403
     
@@ -103,15 +101,13 @@ def cancel_booking():
     
     else:
         try:
-            db = get_db()
-            booked_user = db.execute("SELECT userid FROM schedule WHERE date = ?", (date_arg,)).fetchone()
+            booked_user = get_user_by_date(date_arg)
 
             # Checks if the date is booked
             if booked_user:
                 # Checks if the user on the booking matches the user logged in
                 if current_user == booked_user[0]:
-                    db.execute("DELETE FROM schedule WHERE date = ?", (date_arg,))
-                    db.commit()
+                    remove_booking(date_arg)
 
                     logging.info(f"Cancelled booking by {booked_user[0]} on "
                                  f"{date_arg}")
@@ -175,20 +171,10 @@ def get_num_bookings(start_date: str, period: str) -> int:
     start_date          The date at which to begin the query
     period              The number of days from the start date
     """
-    query = """
-        SELECT COUNT(*)
-        FROM schedule
-        WHERE strftime('%s', date)
-        BETWEEN strftime('%s', ?1)
-        AND strftime('%s', DATE(?1, ?2))
-        AND userid = ?3
-    """
-
     user_id = session.get("user_id")
 
     try:
-        db = get_db()
-        res = db.execute(query, (start_date, period, user_id)).fetchone()[0]
+        res = get_bookings_by_params(date=start_date, period=period, id=user_id)
 
     except Exception as err:
         logging.error(f"Error retrieving booking count for {user_id} from "

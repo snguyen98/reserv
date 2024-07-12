@@ -1,11 +1,12 @@
 import functools
+import logging
 
 from flask import Blueprint, request, session, g
 from flask import render_template, flash, redirect, url_for
 from werkzeug.security import check_password_hash
-from ..data.db import get_db
+
+from ..data.query import get_user_by_id
 from ..forms.login_form import Login
-import logging
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -22,8 +23,7 @@ def login():
     # Processes the form data if form passes validation and POST request is made
     if request.method == "POST" and form.validate():
         try:
-            db = get_db()
-            user = db.execute("SELECT * FROM user WHERE userid = ?", (user_id,)).fetchone()
+            user = get_user_by_id(user_id)
             error = None
 
             # Checks if the user id matches a user in the database
@@ -81,8 +81,7 @@ def load_logged_in_user():
         
     else:
         try:
-            db = get_db()
-            g.user = db.execute("SELECT * FROM user WHERE userid = ?", (user_id,)).fetchone()
+            g.user = get_user_by_id(user_id)
 
         except Exception as err:
             logging.error(f"Error retrieving user, {user_id} from database " 
