@@ -1,6 +1,10 @@
 $(document).ready(function() {
     const UNBOOKED_TEXT = "Available";
     
+    var current_user = "";
+    getCurrentUser();
+    console.debug(`User: ${current_user}`)
+    
     // Fetches the schedule and repeats every 7 seconds
     updateSchedule();
     setInterval(updateSchedule, 7000);
@@ -204,7 +208,7 @@ $(document).ready(function() {
             $("#book-btn").hide();
             
             // Hides the corresponding button if the date is in the past
-            if (IsDateInFuture(selected_date)) {
+            if (IsDateInFuture(selected_date) && booker == current_user) {
                 $("#cancel-btn").show();
             }
             else {
@@ -225,10 +229,31 @@ $(document).ready(function() {
         }
     }
     
+    /*
+    * Checks if the supplied date is today or in the future (ignores time)
+    */
     function IsDateInFuture(date) {
         var today = new Date();
         today.setHours(0, 0, 0, 0);
 
         return today <= date;
+    }
+
+    /*
+    * Performs an ajax call (non-async) to get the currently logged in user
+    */
+    function getCurrentUser() {
+        $.getJSON({
+            url: "/handlers/get_current_user",
+            async: false,
+            success: function(data) {
+                // Sets the global variable, current_user to the response
+                current_user = data.user;
+            },
+            error: function(xhr) {
+                var msg = JSON.parse(xhr.responseText).message;
+                console.error("Error retrieving current user: " + msg);
+            }
+        });
     }
 });

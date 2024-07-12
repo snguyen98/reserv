@@ -11,6 +11,27 @@ schedule_handler_bp = Blueprint(
     url_prefix="/handlers"
 )
 
+@schedule_handler_bp.route("/get_current_user", methods=["GET"])
+def get_current_user():
+    """
+    Handler for returning the display name of the currently logged in user
+    """
+    try:
+        user_id = session.get('user_id')
+        res = get_name_by_id(user_id)
+
+        if not res[0] or res[0] == "":
+            logging.warning(f"No display name found for user, {user_id}")
+            return jsonify(message="Logged in user has no display name"), 403
+
+        logging.debug(f"Found name, {res[0]} for id, {user_id}")
+        return jsonify(user=res[0]), 200
+
+    except Exception as err:
+        logging.error(f"Error retrieving name for {user_id}, {err}")
+        return jsonify(message="No user logged in"), 403
+
+
 @schedule_handler_bp.route("/get_booker", methods=["GET"])
 def get_booker():
     """
