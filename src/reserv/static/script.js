@@ -1,5 +1,9 @@
 $(document).ready(function() {
     const UNBOOKED_TEXT = "Available";
+
+    var current_user = "";
+    getCurrentUser();
+    console.debug(`User: ${current_user}`)
     
     // Fetches the schedule and repeats every 7 seconds
     updateSchedule();
@@ -96,20 +100,29 @@ $(document).ready(function() {
     * Updates the booking status of each cell in the schedule
     */
     function updateSchedule() {
-        $('.schedule-cell').each(function() {
-            var cell_date = $(this).attr('id');
+        var date_list = [];
 
-            // Performs an ajax call to get the booking status
-            $.getJSON({
-                url: "/handlers/get_booker",
-                data: { "date": cell_date },
-                success: function(data) {
-                    var cell_id = "#" + cell_date;
+        $('.schedule-cell').each(function() {
+            date_list.push($(this).attr('id'));
+        });
+
+        console.debug(`Updating dates: ${date_list}`)
+
+        // Performs an ajax call to get the booking status
+        $.getJSON({
+            url: "/handlers/get_bookers",
+            data: { "date_list": date_list },
+            contentType: "application/json; charset=utf-8",
+            success: function(data) {
+                bookings = data.res;
+
+                for (const date in bookings) {
+                    var cell_id = "#" + date;
                     
                     // Sets custom html data attribute for booker
-                    $(cell_id).data("booker", data.booker);
+                    $(cell_id).data("booker", bookings[date].booker);
 
-                    if (data.isBooked) {
+                    if (bookings[date].isBooked) {
                         // Makes the cell red
                         $(cell_id).addClass("table-danger");
                         $(cell_id).removeClass("table-success");
@@ -119,20 +132,19 @@ $(document).ready(function() {
                         $(cell_id).addClass("table-success");
                         $(cell_id).removeClass("table-danger");
                     }
-
-                    displaySelected();          // Refreshes the info card
-                    findNextBooking();          // Refreshes the upcoming card
-                },
-                error: function(xhr) {
-                    var msg = JSON.parse(xhr.responseText).message;
-                    console.error("Error retrieving booker data: " + msg);
                 }
-            });
+                displaySelected();          // Refreshes the info card
+                findNextBooking();          // Refreshes the upcoming card
+
+                var now = new Date();
+                datetime = `${now.toDateString()} ${now.toTimeString()}`
+                console.info(`Schedule updated at: ${datetime}`);
+            },
+            error: function(xhr) {
+                var msg = JSON.parse(xhr.responseText).message;
+                console.error("Error retrieving booker data: " + msg);
+            }
         });
-        
-        var now = new Date();
-        datetime = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`
-        console.info(`Schedule updated at: ${datetime}`);
     }
 
     /*
@@ -204,7 +216,7 @@ $(document).ready(function() {
             $("#book-btn").hide();
             
             // Hides the corresponding button if the date is in the past
-            if (IsDateInFuture(selected_date)) {
+            if (IsDateInFuture(selected_date) && booker == current_user) {
                 $("#cancel-btn").show();
             }
             else {
@@ -225,10 +237,31 @@ $(document).ready(function() {
         }
     }
     
+    /*
+    * Checks if the supplied date is today or in the future (ignores time)
+    */
     function IsDateInFuture(date) {
         var today = new Date();
         today.setHours(0, 0, 0, 0);
 
         return today <= date;
+    }
+
+    /*
+    * Performs an ajax call (non-async) to get the currently logged in user
+    */
+    function getCurrentUser() {
+        $.getJSON({
+            url: "/handlers/get_current_user",
+            async: false,
+            success: function(data) {
+                // Sets the global variable, current_user to the response
+                current_user = data.user;
+            },
+            error: function(xhr) {
+                var msg = JSON.parse(xhr.responseText).message;
+                console.error("Error retrieving current user: " + msg);
+            }
+        });
     }
 });

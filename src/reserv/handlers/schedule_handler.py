@@ -11,34 +11,71 @@ schedule_handler_bp = Blueprint(
     url_prefix="/handlers"
 )
 
-@schedule_handler_bp.route("/get_booker", methods=["GET"])
-def get_booker():
+@schedule_handler_bp.route("/get_current_user", methods=["GET"])
+def get_current_user():
     """
-    Handler for returning the display name of the booker assigned to the date
-    supplied by the request
+    Handler for returning the display name of the currently logged in user
     """
-    date_arg = request.args.get('date')
-
     try:
-        res_booker = get_user_by_date(date_arg)
+        user_id = session.get('user_id')
+        res = get_name_by_id(user_id)
 
-        if res_booker:
-            booker_id = res_booker[0]
-            res = get_name_by_id(booker_id)
+        if not res[0] or res[0] == "":
+            logging.warning(f"No display name found for user, {user_id}")
+            return jsonify(message="Logged in user has no display name"), 403
 
-            if not res[0] or res[0] == "":
-                logging.warning(f"No display name found for user, {booker_id}")
-
-            logging.debug(f"Found booker with name, {res[0]} for {date_arg}")
-            return jsonify(isBooked=True, booker=res[0])
-        
-        else:
-            logging.debug(f"No booker found for {date_arg}")
-            return jsonify(isBooked=False, booker="")
+        logging.debug(f"Found name, {res[0]} for id, {user_id}")
+        return jsonify(user=res[0]), 200
 
     except Exception as err:
-        logging.error(f"Error retrieving booker for {date_arg}, {err}")
-        return jsonify(isBooked=False, booker="")
+        logging.error(f"Error retrieving name for {user_id}, {err}")
+        return jsonify(message="No user logged in"), 403
+
+
+@schedule_handler_bp.route("/get_bookers", methods=["GET"])
+def get_bookers():
+    """
+    Handler for returning the display name of the booker assigned to each date
+    in the list supplied by the request
+    """
+    dates_arg = request.args.getlist("date_list[]")
+    bookings = {}
+
+    logging.debug(f"Getting bookers for {dates_arg}")
+
+    for date in dates_arg:
+        try:
+            res_booker = get_user_by_date(date)
+
+            if res_booker:
+                booker_id = res_booker[0]
+                res = get_name_by_id(booker_id)
+
+                if not res[0] or res[0] == "":
+                    logging.warning(f"No display name found for user, {booker_id}")
+
+                logging.debug(f"Found booker with name, {res[0]} for {date}")
+                bookings[date] = {
+                    "isBooked": True,
+                    "booker": res[0]
+                }
+            
+            else:
+                logging.debug(f"No booker found for {date}")
+                bookings[date] = {
+                    "isBooked": False,
+                    "booker": ""
+                }
+
+        except Exception as err:
+            logging.error(f"Error retrieving booker for {date}, {err}")
+            bookings[date] = {
+                "isBooked": False,
+                "booker": ""
+            }
+    
+    logging.debug(f"Sending: {bookings}")
+    return jsonify(res=bookings)
     
 
 @schedule_handler_bp.route("/set_booker", methods=["GET"])
