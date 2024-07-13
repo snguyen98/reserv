@@ -32,34 +32,50 @@ def get_current_user():
         return jsonify(message="No user logged in"), 403
 
 
-@schedule_handler_bp.route("/get_booker", methods=["GET"])
-def get_booker():
+@schedule_handler_bp.route("/get_bookers", methods=["GET"])
+def get_bookers():
     """
-    Handler for returning the display name of the booker assigned to the date
-    supplied by the request
+    Handler for returning the display name of the booker assigned to each date
+    in the list supplied by the request
     """
-    date_arg = request.args.get('date')
+    dates_arg = request.args.getlist("date_list[]")
+    bookings = {}
 
-    try:
-        res_booker = get_user_by_date(date_arg)
+    logging.debug(f"Getting bookers for {dates_arg}")
 
-        if res_booker:
-            booker_id = res_booker[0]
-            res = get_name_by_id(booker_id)
+    for date in dates_arg:
+        try:
+            res_booker = get_user_by_date(date)
 
-            if not res[0] or res[0] == "":
-                logging.warning(f"No display name found for user, {booker_id}")
+            if res_booker:
+                booker_id = res_booker[0]
+                res = get_name_by_id(booker_id)
 
-            logging.debug(f"Found booker with name, {res[0]} for {date_arg}")
-            return jsonify(isBooked=True, booker=res[0])
-        
-        else:
-            logging.debug(f"No booker found for {date_arg}")
-            return jsonify(isBooked=False, booker="")
+                if not res[0] or res[0] == "":
+                    logging.warning(f"No display name found for user, {booker_id}")
 
-    except Exception as err:
-        logging.error(f"Error retrieving booker for {date_arg}, {err}")
-        return jsonify(isBooked=False, booker="")
+                logging.debug(f"Found booker with name, {res[0]} for {date}")
+                bookings[date] = {
+                    "isBooked": True,
+                    "booker": res[0]
+                }
+            
+            else:
+                logging.debug(f"No booker found for {date}")
+                bookings[date] = {
+                    "isBooked": False,
+                    "booker": ""
+                }
+
+        except Exception as err:
+            logging.error(f"Error retrieving booker for {date}, {err}")
+            bookings[date] = {
+                "isBooked": False,
+                "booker": ""
+            }
+    
+    logging.debug(f"Sending: {bookings}")
+    return jsonify(res=bookings)
     
 
 @schedule_handler_bp.route("/set_booker", methods=["GET"])
