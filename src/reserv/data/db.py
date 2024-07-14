@@ -36,6 +36,13 @@ def init_db():
     """
     Defines a click command that initialises the database from schema file
     """
+    db_dir = os.path.dirname(current_app.config["DATABASE"])
+
+    try:
+        os.makedirs(db_dir)
+    except:
+        pass
+    
     db = get_db()
 
     try:
