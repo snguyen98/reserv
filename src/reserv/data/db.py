@@ -42,11 +42,12 @@ def init_db():
         os.makedirs(db_dir)
     except:
         pass
-    
-    db = get_db()
 
     try:
-        with current_app.open_resource("data/schema.sql") as f:
+        db = get_db()
+        version = get_release_db_version()
+
+        with current_app.open_resource(f"data/schema_v{version}.sql") as f:
             db.executescript(f.read().decode("utf8"))
 
         click.echo("Initialised the database")
@@ -65,11 +66,9 @@ def upgrade_db():
     """
     current_dir = os.path.dirname(os.path.realpath(__file__))
     upgrades_dir = os.path.join(current_dir, "./upgrades")
-    version_path = os.path.join(current_dir, "../db_version.txt")
-
+    
     try:
-        with open(version_path, "rt") as f:
-            release_ver = int(f.read())
+        release_ver = get_release_db_version()
     except Exception as err:
         logging.error(f"Could read the app database version, {err}")
         click.echo("Error reading the app database version")
@@ -107,22 +106,29 @@ def upgrade_db():
     
     logging.info(f"Database schema upgrade finished, current: {instance_ver}")
     click.echo(f"Database schema upgrade finished, current: {instance_ver}")
+    
+
+def get_release_db_version():
+    """
+    Gets the version of the schema in line with the release deployed
+    """
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    version_path = os.path.join(current_dir, "../db_version.txt")
+
+    with open(version_path, "rt") as f:
+        release_ver = int(f.read())
+
+    return release_ver
 
 
 def get_db_version() -> int:
     """
     Queries the database for it's current version
     """
-    try:
-        db = get_db()
-        query = "PRAGMA user_version"
-        res = db.execute(query).fetchone()
-        return res[0]
-    
-    except Exception as err:
-        logging.error(f"Could not get the database version, {err}")
-        click.echo("Error getting the database version")
-        return None
+    db = get_db()
+    query = "PRAGMA user_version"
+    res = db.execute(query).fetchone()
+    return res[0]
 
 
 def update_db_version(version: int):
@@ -133,14 +139,9 @@ def update_db_version(version: int):
     ------
     version     The version number as integer to update the database to
     """
-    try:
-        db = get_db()
-        query = "PRAGMA user_version = {v:d}".format(v=version)
-        db.execute(query)
-    except Exception as err:
-        logging.error(f"Failed to update database version to {version}")
-        click.echo(f"Error updating database version to {version}")
-        return
+    db = get_db()
+    query = "PRAGMA user_version = {v:d}".format(v=version)
+    db.execute(query)
 
 
 def init_app(app):
