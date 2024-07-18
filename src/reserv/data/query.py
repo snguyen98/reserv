@@ -65,3 +65,12 @@ def get_bookings_by_params(date: str, period: str, id: str) -> int:
     res = db.execute(query, (date, period, id)).fetchone()[0]
 
     return res
+
+
+def get_user_status(id: str):
+    query = "SELECT status FROM user WHERE userid = ?"
+
+    db = get_db()
+    res = db.execute(query, (id,)).fetchone()[0]
+
+    return res
