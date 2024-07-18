@@ -45,11 +45,11 @@ def get_bookers():
             res_booker = get_user_by_date(date)
 
             if res_booker:
-                booker_id = res_booker[0]
-                res = get_name_by_id(booker_id)
+                booker = res_booker[0]
+                res = get_name_by_id(booker)
 
                 if not res[0] or res[0] == "":
-                    logging.warning(f"No display name found for user, {booker_id}")
+                    logging.warning(f"No display name found for user, {booker}")
 
                 logging.debug(f"Found booker with name, {res[0]} for {date}")
                 bookings[date] = {
