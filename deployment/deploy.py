@@ -59,7 +59,7 @@ def get_version(dest_path: str) -> str:
     ------
     dest_path        The path of the currently deployed app
     """
-    version_path = os.path.join(dest_path, "version.txt")
+    version_path = os.path.join(dest_path, "app_version.txt")
 
     try:
         with open(version_path, "rt") as f:

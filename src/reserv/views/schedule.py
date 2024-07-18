@@ -1,14 +1,13 @@
 from flask import render_template, Blueprint, g
-from flask_login import login_required
 from datetime import date, timedelta
 import logging
 
-from .auth import login_required
+from .auth import login_required_view
 
 schedule_bp = Blueprint("schedule", __name__)
 
 @schedule_bp.route('/')
-@login_required
+@login_required_view
 def index():
     """
     Defines g.schedule to be used in the schedule template (index.html)

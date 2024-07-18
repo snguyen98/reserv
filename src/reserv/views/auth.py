@@ -1,11 +1,11 @@
 import functools
 import logging
 
-from flask import Blueprint, request, session, g
+from flask import Blueprint, request, session, g, jsonify
 from flask import render_template, flash, redirect, url_for
 from werkzeug.security import check_password_hash
 
-from ..data.query import get_user_by_id
+from ..data.query import get_user_by_id, get_user_status
 from ..forms.login_form import Login
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -68,6 +68,15 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
+@auth_bp.route("/access_denied")
+def access_denied():
+    """
+    Displays the access denied page for users who are inactive or don't have the
+    necessary permissions to view the page
+    """
+    return render_template('access_denied.html')
+
+
 @auth_bp.before_app_request
 def load_logged_in_user():
     """
@@ -88,20 +97,56 @@ def load_logged_in_user():
                           f"with error: {err}")
 
 
-def login_required(view):
+def login_required_view(view):
     """
-    View decorator that redirects anonymous users to the login page
+    View decorator used for web views that checks if a user is logged in
+    and active, redirects to the login page if not
     """
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        logging.debug("Checking if user is logged in...")
+        logging.debug("Checking if user is logged in (view)...")
 
         if g.user is None:
             logging.debug("User is not logged in, redirecting to login page...")
             return redirect(url_for("auth.login"))
+        
+        elif not check_user_active(g.user["userid"]):
+            logging.debug("User is inactive, redirecting to login page...")
+            return redirect(url_for("auth.access_denied"))
 
         else:
             logging.debug("User is logged in")
             return view(**kwargs)
 
     return wrapped_view
+
+
+def login_required_ajax(view):
+    """
+    View decorator used for ajax handlers that checks if a user is logged in
+    and active, returns 403 error if not
+    """
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        logging.debug("Checking if user is logged in (ajax)...")
+
+        if g.user is None:
+            logging.debug("User is not logged in, returning html code 403...")
+            return jsonify(message="No user logged in"), 403
+
+        elif not check_user_active(g.user["userid"]):
+            logging.debug("User is inactive, returning html code 403...")
+            return jsonify(message="Error: account is inactive"), 403
+        
+        else:
+            logging.debug("User is logged in")
+            return view(**kwargs)
+
+    return wrapped_view
+
+
+def check_user_active(user_id: str) -> bool:
+    """
+    Checks if user status of the supplied user is active
+    """
+    return get_user_status(user_id) == "active"
