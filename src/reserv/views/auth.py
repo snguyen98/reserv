@@ -1,7 +1,7 @@
 import functools
 import logging
 
-from flask import Blueprint, request, session, g
+from flask import Blueprint, request, session, g, jsonify
 from flask import render_template, flash, redirect, url_for
 from werkzeug.security import check_password_hash
 
@@ -99,6 +99,25 @@ def login_required(view):
         if g.user is None:
             logging.debug("User is not logged in, redirecting to login page...")
             return redirect(url_for("auth.login"))
+
+        else:
+            logging.debug("User is logged in")
+            return view(**kwargs)
+
+    return wrapped_view
+
+
+def login_required_ajax(view):
+    """
+    View decorator that redirects anonymous users to the login page
+    """
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        logging.debug("Checking if user is logged in...")
+
+        if session.get("user_id") is None:
+            logging.debug("User is not logged in, returning html code 403...")
+            return jsonify(message="No user logged in"), 403
 
         else:
             logging.debug("User is logged in")

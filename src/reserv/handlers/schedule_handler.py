@@ -1,9 +1,10 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, g
 from datetime import date, datetime, timedelta
 import logging
 
 from ..data.query import get_user_by_date, get_name_by_id
 from ..data.query import create_booking, remove_booking, get_bookings_by_params
+from ..views.auth import login_required_ajax
 
 schedule_handler_bp = Blueprint(
     "schedule_handler",
@@ -12,27 +13,23 @@ schedule_handler_bp = Blueprint(
 )
 
 @schedule_handler_bp.route("/get_current_user", methods=["GET"])
+@login_required_ajax
 def get_current_user():
     """
     Handler for returning the display name of the currently logged in user
     """
-    try:
-        user_id = session.get('user_id')
-        res = get_name_by_id(user_id)
+    user_id = g.user["userid"]
+    res = get_name_by_id(user_id)
 
-        if not res[0] or res[0] == "":
-            logging.warning(f"No display name found for user, {user_id}")
-            return jsonify(message="Logged in user has no display name"), 403
+    if not res[0] or res[0] == "":
+        logging.warning(f"No display name found for user, {user_id}")
+        return jsonify(message="Logged in user has no display name"), 403
 
-        logging.debug(f"Found name, {res[0]} for id, {user_id}")
-        return jsonify(user=res[0]), 200
-
-    except Exception as err:
-        logging.error(f"Error retrieving name for {user_id}, {err}")
-        return jsonify(message="No user logged in"), 403
-
+    logging.debug(f"Found name, {res[0]} for id, {user_id}")
+    return jsonify(user=res[0]), 200
 
 @schedule_handler_bp.route("/get_bookers", methods=["GET"])
+@login_required_ajax
 def get_bookers():
     """
     Handler for returning the display name of the booker assigned to each date
@@ -79,6 +76,7 @@ def get_bookers():
     
 
 @schedule_handler_bp.route("/set_booker", methods=["GET"])
+@login_required_ajax
 def set_booker():
     """
     Handler for setting the booker to the currently logged in user to the date
@@ -88,11 +86,7 @@ def set_booker():
     current_user = session.get('user_id')
 
     # Checks if the booking is valid first
-    if session.get("user_id") is None:
-        logging.debug(f"Date {date_arg} was not booked as no user is logged in")
-        return jsonify(message="Not logged in"), 403
-
-    elif datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
+    if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
         logging.debug(f"Date {date_arg} was not booked for {current_user} as "
                       "booking date is in the past")
         return jsonify(message="Booking date cannot be in the past"), 403
@@ -118,6 +112,7 @@ def set_booker():
 
 
 @schedule_handler_bp.route("/cancel_booking", methods=["GET"])
+@login_required_ajax
 def cancel_booking():
     """
     Handler for cancelling the booking on the supplied date if the booker 
@@ -127,11 +122,7 @@ def cancel_booking():
     current_user = session.get('user_id')
 
     # Checks if the date can be cancelled first
-    if current_user is None:
-        logging.debug(f"Date {date_arg} was not cancelled, no user logged in")
-        return jsonify(message="Not logged in"), 403
-    
-    elif datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
+    if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
         logging.debug(f"Date {date_arg} was not cancelled for {current_user} " 
                       "as cancel date is in the past")
         return jsonify(message="Cancel date cannot be in the past"), 403
