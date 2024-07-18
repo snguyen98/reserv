@@ -136,7 +136,7 @@ def login_required_ajax(view):
 
         elif not check_user_active(g.user["userid"]):
             logging.debug("User is inactive, returning html code 403...")
-            return jsonify(message="Account is inactive"), 403
+            return jsonify(message="Error: account is inactive"), 403
         
         else:
             logging.debug("User is logged in")
