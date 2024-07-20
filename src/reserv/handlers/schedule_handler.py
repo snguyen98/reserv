@@ -4,6 +4,7 @@ import logging
 
 from ..data.query import get_user_by_date, get_name_by_id
 from ..data.query import create_booking, remove_booking, get_bookings_by_params
+from ..data.query import get_user_permissions, get_perm_by_name
 from ..views.auth import login_required_ajax
 
 schedule_handler_bp = Blueprint(
@@ -28,6 +29,27 @@ def get_current_user():
     logging.debug(f"Found name, {res[0]} for id, {user_id}")
     return jsonify(user=res[0]), 200
 
+
+@schedule_handler_bp.route("/has_manage_perm", methods=["GET"])
+@login_required_ajax
+def has_manage_perm():
+    """
+    Handler for returning True if the currently logged in user has the manage
+    permission, False otherwise
+    """
+    user_id = g.user["user_id"]
+
+    try:
+        res = check_manage_perm(user_id)
+        logging.info(f"User {user_id} has manage permissions: {res}")
+
+        return jsonify(res=res), 200
+
+    except Exception as err:
+        logging.error(f"Error when checking permissions for user, {user_id}")
+        return jsonify(message="Logged in user has no display name"), 500
+
+
 @schedule_handler_bp.route("/get_bookers", methods=["GET"])
 @login_required_ajax
 def get_bookers():
@@ -35,6 +57,7 @@ def get_bookers():
     Handler for returning the display name of the booker assigned to each date
     in the list supplied by the request
     """
+    current_user = session.get('user_id')
     dates_arg = request.args.getlist("date_list[]")
     bookings = {}
 
@@ -54,21 +77,24 @@ def get_bookers():
                 logging.debug(f"Found booker with name, {res[0]} for {date}")
                 bookings[date] = {
                     "isBooked": True,
-                    "booker": res[0]
+                    "booker": res[0],
+                    "bookPerm": res[0] == current_user
                 }
             
             else:
                 logging.debug(f"No booker found for {date}")
                 bookings[date] = {
                     "isBooked": False,
-                    "booker": ""
+                    "booker": "",
+                    "bookPerm": False
                 }
 
         except Exception as err:
             logging.error(f"Error retrieving booker for {date}, {err}")
             bookings[date] = {
                 "isBooked": False,
-                "booker": ""
+                "booker": "",
+                "bookPerm": False
             }
     
     logging.debug(f"Sending: {bookings}")
@@ -119,11 +145,11 @@ def cancel_booking():
     matches the currently logged in user
     """
     date_arg = request.args.get('date')
-    current_user = session.get('user_id')
+    curr_user = session.get('user_id')
 
     # Checks if the date can be cancelled first
     if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
-        logging.debug(f"Date {date_arg} was not cancelled for {current_user} " 
+        logging.debug(f"Date {date_arg} was not cancelled for {curr_user} " 
                       "as cancel date is in the past")
         return jsonify(message="Cancel date cannot be in the past"), 403
     
@@ -134,7 +160,7 @@ def cancel_booking():
             # Checks if the date is booked
             if booked_user:
                 # Checks if the user on the booking matches the user logged in
-                if current_user == booked_user[0]:
+                if curr_user == booked_user[0] or check_manage_perm(curr_user):
                     remove_booking(date_arg)
 
                     logging.info(f"Cancelled booking by {booked_user[0]} on "
@@ -143,7 +169,7 @@ def cancel_booking():
                 
                 else:
                     logging.debug(f"Booking on {date_arg} was not cancelled as "
-                                  f"logged in user {current_user} did not match"
+                                  f"logged in user {curr_user} did not match"
                                   f" booked user {booked_user[0]}")
                     return jsonify(
                         message="Something went wrong with the request"), 500
@@ -211,3 +237,18 @@ def get_num_bookings(start_date: str, period: str) -> int:
     logging.debug(f"Num bookings: {res} by {user_id} for start date: " 
                   f"{start_date}, period: {period}")
     return res
+
+
+def check_manage_perm(user_id: str) -> bool:
+    """
+    Returns True if the user with the supplied id has manage permissions, False
+    otherwise
+
+    Params
+    ------
+    user_id     The id of the user to check the permissions of
+    """
+    res = get_name_by_id(user_id)
+    perms = get_user_permissions(user_id)
+
+    return get_perm_by_name("manage") in perms
