@@ -156,6 +156,7 @@ def init_app(app):
     app.cli.add_command(init_db)
     app.cli.add_command(upgrade_db)
     app.cli.add_command(create_user)
+    app.cli.add_command(assign_role)
 
 
 @click.command("create-user")
@@ -190,8 +191,54 @@ def create_user(id, name, password, status):
 def add_user(id: str, name: str, hash_password: str, status: str):
     query = """
     INSERT INTO user (user_id, display_name, password, status)
-    VALUES (?,?,?, ?)
+    VALUES (?,?,?,?)
     """
     db = get_db()
     db.execute(query, (id, name, hash_password, status,))
     db.commit()
+
+
+@click.command("assign-role")
+@click.argument("id")
+@click.argument("role")
+@with_appcontext
+def assign_role(id, role):
+    """
+    Defines a click command to assign a role to an existing user
+
+    Params
+    ------
+    id              The user id of the user
+    role            The name of the role to assign
+    """
+
+    try:
+        grant_role(id=id, role_name=role)
+
+        click.echo(f"Successfully assigned role {role} to user with ID {id}")
+        logging.info(f"Successfully assigned role {role} to user with ID {id}")
+
+    except Exception as err:
+        click.echo(f"An error occurred when assigning the role, {err}")
+        logging.error(f"Error assigning role, {err}")
+
+
+def grant_role(id: str, role_name: str,):
+    role_id = get_role_by_name(role_name)
+
+    query = """
+    INSERT INTO user_role (user_id, role_id)
+    VALUES (?,?)
+    """
+    db = get_db()
+    db.execute(query, (id, role_id,))
+    db.commit()
+
+
+def get_role_by_name(name: str) -> int:
+    query = "SELECT id FROM role WHERE name = ?"
+
+    db = get_db()
+    res = db.execute(query, (name,)).fetchone()[0]
+
+    return res
