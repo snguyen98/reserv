@@ -162,8 +162,9 @@ def init_app(app):
 @click.argument("id")
 @click.argument("name")
 @click.argument("password")
+@click.argument("status")
 @with_appcontext
-def create_user(id, name, password):
+def create_user(id, name, password, status):
     """
     Defines a click command to create a new user to the database
 
@@ -176,7 +177,7 @@ def create_user(id, name, password):
     hash_password = generate_password_hash(password)
 
     try:
-        add_user(id=id, name=name, hash_password=hash_password)
+        add_user(id=id, name=name, hash_password=hash_password, status=status)
 
         click.echo(f"Successfully created user with ID {id}")
         logging.info(f"Successfully created user with ID {id}")
@@ -186,8 +187,11 @@ def create_user(id, name, password):
         logging.error(f"Error creating user, {err}")
 
 
-def add_user(id: str, name: str, hash_password: str):
-    query = "INSERT INTO user (user_id, display_name, password) VALUES (?,?,?)"
+def add_user(id: str, name: str, hash_password: str, status: str):
+    query = """
+    INSERT INTO user (user_id, display_name, password, status)
+    VALUES (?,?,?, ?)
+    """
     db = get_db()
-    db.execute(query, (id, name, hash_password,))
+    db.execute(query, (id, name, hash_password, status,))
     db.commit()
