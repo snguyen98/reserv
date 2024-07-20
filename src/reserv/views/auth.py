@@ -95,6 +95,7 @@ def load_logged_in_user():
         except Exception as err:
             logging.error(f"Error retrieving user, {user_id} from database " 
                           f"with error: {err}")
+            g.user = None
 
 
 def login_required_view(view):
