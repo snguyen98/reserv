@@ -74,3 +74,38 @@ def get_user_status(id: str) -> str:
     res = db.execute(query, (id,)).fetchone()[0]
 
     return res
+
+
+def get_user_roles(id: str) -> list:
+    query = "SELECT role_id FROM user_role WHERE user_id = ?"
+
+    db = get_db()
+    res = db.execute(query, (id,)).fetchall()
+
+    return res
+
+
+def get_user_permissions(id: str) -> set:
+    roles = get_user_roles(id)
+
+    perms = set()
+
+    for role_id in roles:
+        query = "SELECT permission_id FROM role_permission WHERE role_id = ?"
+
+        db = get_db()
+        res = db.execute(query, (role_id[0],)).fetchall()
+
+        role_perms = [perm[0] for perm in res]
+        perms.update(role_perms)
+
+    return perms
+
+
+def get_perm_by_name(name: str) -> int:
+    query = "SELECT id FROM permission WHERE name = ?"
+
+    db = get_db()
+    res = db.execute(query, (name,)).fetchone()[0]
+
+    return res
