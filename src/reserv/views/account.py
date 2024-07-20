@@ -17,7 +17,7 @@ def change_name():
     Change user display name based on form submission
     """
     form = ChangeName(request.form)
-    current_user = g.user["userid"]
+    current_user = g.user["user_id"]
     new_name = form.new_name.data
 
     # Processes the form data if form passes validation and POST request is made
@@ -50,7 +50,7 @@ def reset_password():
     Reset user password based on form submission
     """
     form = ResetPassword(request.form)
-    current_user = g.user["userid"]
+    current_user = g.user["user_id"]
 
     # Processes the form data if form passes validation and POST request is made
     if request.method == 'POST' and form.validate():

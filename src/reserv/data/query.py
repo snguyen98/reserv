@@ -1,14 +1,14 @@
 from .db import get_db
 
 def get_user_by_id(id: str) -> list:
-    query = "SELECT * FROM user WHERE userid = ?"
+    query = "SELECT * FROM user WHERE user_id = ?"
     db = get_db()
     res = db.execute(query, (id,)).fetchone()
 
     return res
 
 def get_name_by_id(id: str) -> str:
-    query = "SELECT displayname FROM user WHERE userid = ?"
+    query = "SELECT display_name FROM user WHERE user_id = ?"
     db = get_db()
     res = db.execute(query, (id,)).fetchone()
 
@@ -16,7 +16,7 @@ def get_name_by_id(id: str) -> str:
 
 
 def get_user_by_date(date: str) -> str:
-    query = "SELECT userid FROM schedule WHERE date = ?"
+    query = "SELECT user_id FROM schedule WHERE date = ?"
     db = get_db()
     res = db.execute(query, (date,)).fetchone()
 
@@ -24,21 +24,21 @@ def get_user_by_date(date: str) -> str:
 
 
 def update_name(id: str, name: str):
-    query = "UPDATE user SET displayname = ? WHERE userid = ? "
+    query = "UPDATE user SET display_name = ? WHERE user_id = ? "
     db = get_db()
     db.execute(query, (name, id))
     db.commit()
 
 
 def update_password(id: str, password: str):
-    query = "UPDATE user SET password = ? WHERE userid = ? "
+    query = "UPDATE user SET password = ? WHERE user_id = ? "
     db = get_db()
     db.execute(query, (password, id))
     db.commit()
 
 
 def create_booking(date: str, id: str):
-    query = "INSERT INTO schedule (date, userid) VALUES (?,?)"
+    query = "INSERT INTO schedule (date, user_id) VALUES (?,?)"
     db = get_db()
     db.execute(query, (date, id))
     db.commit()
@@ -58,7 +58,7 @@ def get_bookings_by_params(date: str, period: str, id: str) -> int:
         WHERE strftime('%s', date)
         BETWEEN strftime('%s', ?1)
         AND strftime('%s', DATE(?1, ?2))
-        AND userid = ?3
+        AND user_id = ?3
     """
 
     db = get_db()
@@ -67,8 +67,8 @@ def get_bookings_by_params(date: str, period: str, id: str) -> int:
     return res
 
 
-def get_user_status(id: str):
-    query = "SELECT status FROM user WHERE userid = ?"
+def get_user_status(id: str) -> str:
+    query = "SELECT status FROM user WHERE user_id = ?"
 
     db = get_db()
     res = db.execute(query, (id,)).fetchone()[0]

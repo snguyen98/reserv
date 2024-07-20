@@ -18,7 +18,7 @@ def get_current_user():
     """
     Handler for returning the display name of the currently logged in user
     """
-    user_id = g.user["userid"]
+    user_id = g.user["user_id"]
     res = get_name_by_id(user_id)
 
     if not res[0] or res[0] == "":

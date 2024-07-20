@@ -187,7 +187,7 @@ def create_user(id, name, password):
 
 
 def add_user(id: str, name: str, hash_password: str):
-    query = "INSERT INTO user (userid, displayname, password) VALUES (?,?,?)"
+    query = "INSERT INTO user (user_id, display_name, password) VALUES (?,?,?)"
     db = get_db()
     db.execute(query, (id, name, hash_password,))
     db.commit()
