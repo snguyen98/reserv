@@ -2,9 +2,8 @@ $(document).ready(function() {
     if (window.location.pathname == '/') {
         const UNBOOKED_TEXT = "Available";
 
-        var current_user = "";
-        getCurrentUser();
-        console.debug(`User: ${current_user}`)
+        var manage = false;
+        var curr_user = "";
         
         // Fetches the schedule and repeats every 7 seconds
         updateSchedule();
@@ -209,15 +208,21 @@ $(document).ready(function() {
             var booker = $("#" + cell_date).data("booker");
             // console.debug("Displaying: " + cell_date + ", " + booker);
 
-            var selected_date = new Date(cell_date);
+            hasManagePerm();
+
+            if (!manage) {
+                getCurrentUser();
+            }
+
+            var date = new Date(cell_date);
 
             // Displays the appropriate info whether the date is booked or not
             if (booker != "") {
                 $("#info-booker").text(booker);            
                 $("#book-btn").hide();
                 
-                // Hides the corresponding button if the date is in the past
-                if (IsDateInFuture(selected_date) && booker == current_user) {
+                // Hides if date is in the past or user doesn't match booker
+                if (IsDateInFuture(date) && (manage || booker == curr_user)) {
                     $("#cancel-btn").show();
                 }
                 else {
@@ -229,7 +234,7 @@ $(document).ready(function() {
                 $("#cancel-btn").hide();
 
                 // Hides the corresponding button if the date is in the past
-                if (IsDateInFuture(selected_date)) {
+                if (IsDateInFuture(date)) {
                     $("#book-btn").show();
                 }
                 else {
@@ -256,12 +261,31 @@ $(document).ready(function() {
                 url: "/handlers/get_current_user",
                 async: false,
                 success: function(data) {
-                    // Sets the global variable, current_user to the response
-                    current_user = data.user;
+                    // Returns the response
+                    curr_user = data.user;
                 },
                 error: function(xhr) {
                     var msg = JSON.parse(xhr.responseText).message;
                     console.error("Error retrieving current user: " + msg);
+                }
+            });
+        }
+
+        /*
+        * Performs an ajax call (non-async) to check if the logged in user has
+        * manage permissions
+        */
+        function hasManagePerm() {
+            $.getJSON({
+                url: "/handlers/has_manage_perm",
+                async: false,
+                success: function(data) {
+                    // Sets the global variable, manage to the response
+                    manage = data.res;
+                },
+                error: function(xhr) {
+                    var msg = JSON.parse(xhr.responseText).message;
+                    console.error("Error checking manage permissions: " + msg);
                 }
             });
         }

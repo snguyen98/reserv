@@ -40,7 +40,7 @@ def login():
             if error is None:
                 # Stores the user id in a new session and return to the index
                 session.clear()
-                session["user_id"] = user["userid"]
+                session["user_id"] = user["user_id"]
 
                 logging.info(f"Logging in as {user_id}...")
 
@@ -95,6 +95,7 @@ def load_logged_in_user():
         except Exception as err:
             logging.error(f"Error retrieving user, {user_id} from database " 
                           f"with error: {err}")
+            g.user = None
 
 
 def login_required_view(view):
@@ -110,7 +111,7 @@ def login_required_view(view):
             logging.debug("User is not logged in, redirecting to login page...")
             return redirect(url_for("auth.login"))
         
-        elif not check_user_active(g.user["userid"]):
+        elif not check_user_active(g.user["user_id"]):
             logging.debug("User is inactive, redirecting to login page...")
             return redirect(url_for("auth.access_denied"))
 
@@ -134,7 +135,7 @@ def login_required_ajax(view):
             logging.debug("User is not logged in, returning html code 403...")
             return jsonify(message="No user logged in"), 403
 
-        elif not check_user_active(g.user["userid"]):
+        elif not check_user_active(g.user["user_id"]):
             logging.debug("User is inactive, returning html code 403...")
             return jsonify(message="Error: account is inactive"), 403
         
