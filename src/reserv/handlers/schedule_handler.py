@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session, g
 from datetime import date, datetime, timedelta
 import logging
 
-from ..data.query import get_user_by_date, get_name_by_id, check_has_perm
+from ..data.query import get_user_by_date, get_name_by_id, check_perm
 from ..data.query import create_booking, remove_booking, get_bookings_by_params
 from ..views.auth import login_required_ajax
 
@@ -40,7 +40,7 @@ def check_user_perm():
     perm = request.args.get('perm')
 
     try:
-        res = check_has_perm(user_id, perm)
+        res = check_perm(user_id, perm)
         logging.info(f"User {user_id} has {perm} permissions: {res}")
 
         return jsonify(res=res), 200
@@ -112,7 +112,7 @@ def set_booker():
     current_user = session.get('user_id')
 
     # Checks if they have valid permissions to book
-    if not check_has_perm(current_user, "book"):
+    if not check_perm(current_user, "book"):
         logging.debug(f"{current_user} could not book {date_arg} as they don't "
                       "have book permissions")
         return jsonify(message="You do not have permission to book, please log "
@@ -161,22 +161,22 @@ def cancel_booking():
     
     else:
         try:
-            booked_user = get_user_by_date(date_arg)
+            book_user = get_user_by_date(date_arg)
 
             # Checks if the date is booked
-            if booked_user:
+            if book_user:
                 # Checks if the user on the booking matches the user logged in
-                if curr_user == booked_user[0] or check_manage_perm(curr_user):
+                if curr_user == book_user[0] or check_perm(curr_user, "manage"):
                     remove_booking(date_arg)
 
-                    logging.info(f"Cancelled booking by {booked_user[0]} on "
+                    logging.info(f"Cancelled booking by {book_user[0]} on "
                                  f"{date_arg}")
                     return jsonify(message="Cancelled booking")
                 
                 else:
                     logging.debug(f"Booking on {date_arg} was not cancelled as "
                                   f"logged in user {curr_user} did not match"
-                                  f" booked user {booked_user[0]}")
+                                  f" booked user {book_user[0]}")
                     return jsonify(
                         message="Something went wrong with the request"), 500
             

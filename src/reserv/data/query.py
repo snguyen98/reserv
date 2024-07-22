@@ -111,7 +111,7 @@ def get_perm_by_name(name: str) -> int:
     return res
 
 
-def check_has_perm(user_id: str, perm: str) -> bool:
+def check_perm(id: str, perm: str) -> bool:
     """
     Checks if the user with the supplied id has the supplied permission (name)
     and returns True if so, otherwise False
@@ -121,6 +121,6 @@ def check_has_perm(user_id: str, perm: str) -> bool:
     user_id     The id of the user to check the permissions
     perm        The name (not id) of the permission to check
     """
-    perms = get_user_permissions(user_id)
+    perms = get_user_permissions(id)
 
     return get_perm_by_name(perm) in perms
