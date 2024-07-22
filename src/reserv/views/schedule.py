@@ -16,9 +16,6 @@ def index():
     user_id = g.user["user_id"]
 
     if check_perm(user_id, "view"):
-        g.book_perm = True if check_perm(id=user_id, perm="book") else False
-        g.manage_perm = True if check_perm(id=user_id, perm="manage") else False
-
         g.today = date.today()
 
         # Calculates the date of the monday of the current week
