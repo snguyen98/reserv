@@ -49,8 +49,10 @@
           <p id="info-booker" class="card-text pt-2"></p>
           {% if g.book_perm %}
             <button id="book-btn" type="button" class="btn btn-primary">Book</button>
-            <button id="cancel-btn" type="button" class="btn btn-danger">Cancel</button>
           {% endif %}
+          {% if g.book_perm or g.manage_perm %}
+            <button id="cancel-btn" type="button" class="btn btn-danger">Cancel</button>
+            {% endif %}
         </div>
         <div id="display-blank">
           <h5 id="info-title" class="card-title">No date selected</h5>

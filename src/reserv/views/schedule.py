@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import logging
 
 from .auth import login_required_view
-from ..data.query import get_user_permissions, get_perm_by_name, check_has_perm
+from ..data.query import check_perm
 
 schedule_bp = Blueprint("schedule", __name__)
 
@@ -15,8 +15,9 @@ def index():
     """
     user_id = g.user["user_id"]
 
-    if check_has_perm(user_id, "view"):
-        g.book_perm = True if check_has_perm(user_id,"book") else False
+    if check_perm(user_id, "view"):
+        g.book_perm = True if check_perm(id=user_id, perm="book") else False
+        g.manage_perm = True if check_perm(id=user_id, perm="manage") else False
 
         g.today = date.today()
 
