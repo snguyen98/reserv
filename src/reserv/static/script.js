@@ -208,7 +208,7 @@ $(document).ready(function() {
             var booker = $("#" + cell_date).data("booker");
             // console.debug("Displaying: " + cell_date + ", " + booker);
 
-            hasManagePerm();
+            hasPerm("manage");
 
             if (!manage) {
                 getCurrentUser();
@@ -266,18 +266,19 @@ $(document).ready(function() {
                 },
                 error: function(xhr) {
                     var msg = JSON.parse(xhr.responseText).message;
-                    console.error("Error retrieving current user: " + msg);
+                    console.error(`Error retrieving current user: ${msg}`)
                 }
             });
         }
 
         /*
         * Performs an ajax call (non-async) to check if the logged in user has
-        * manage permissions
+        * the supplied permission permissions
         */
-        function hasManagePerm() {
+        function hasPerm(perm) {
             $.getJSON({
-                url: "/handlers/has_manage_perm",
+                url: "/handlers/check_perm",
+                data: { "perm": perm },
                 async: false,
                 success: function(data) {
                     // Sets the global variable, manage to the response
@@ -285,7 +286,7 @@ $(document).ready(function() {
                 },
                 error: function(xhr) {
                     var msg = JSON.parse(xhr.responseText).message;
-                    console.error("Error checking manage permissions: " + msg);
+                    console.error(`Error checking ${perm} permissions: ${msg}`);
                 }
             });
         }
