@@ -55,6 +55,6 @@ INSERT OR IGNORE INTO permission (id, name, desc) VALUES
 (3, "view", "Can view the schedule");
 
 INSERT OR IGNORE INTO role_permission (role_id, permission_id) VALUES 
-(1, 1), (1, 2), (1, 3),
+(1, 1), (1, 3),
 (2, 2), (2, 3),
 (3, 3);

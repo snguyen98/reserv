@@ -2,9 +2,8 @@ from flask import Blueprint, request, jsonify, session, g
 from datetime import date, datetime, timedelta
 import logging
 
-from ..data.query import get_user_by_date, get_name_by_id
+from ..data.query import get_user_by_date, get_name_by_id, check_has_perm
 from ..data.query import create_booking, remove_booking, get_bookings_by_params
-from ..data.query import get_user_permissions, get_perm_by_name
 from ..views.auth import login_required_ajax
 
 schedule_handler_bp = Blueprint(
@@ -30,18 +29,19 @@ def get_current_user():
     return jsonify(user=res[0]), 200
 
 
-@schedule_handler_bp.route("/has_manage_perm", methods=["GET"])
+@schedule_handler_bp.route("/check_perm", methods=["GET"])
 @login_required_ajax
-def has_manage_perm():
+def check_user_perm():
     """
     Handler for returning True if the currently logged in user has the manage
     permission, False otherwise
     """
     user_id = g.user["user_id"]
+    perm = request.args.get('perm')
 
     try:
-        res = check_manage_perm(user_id)
-        logging.info(f"User {user_id} has manage permissions: {res}")
+        res = check_has_perm(user_id, perm)
+        logging.info(f"User {user_id} has {perm} permissions: {res}")
 
         return jsonify(res=res), 200
 
@@ -111,8 +111,14 @@ def set_booker():
     date_arg = request.args.get('date')
     current_user = session.get('user_id')
 
-    # Checks if the booking is valid first
-    if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
+    # Checks if they have valid permissions to book
+    if not check_has_perm(current_user, "book"):
+        logging.debug(f"{current_user} could not book {date_arg} as they don't "
+                      "have book permissions")
+        return jsonify(message="You do not have permission to book, please log "
+                       "in as a user"), 403
+    # Checks if the booking is valid
+    elif datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
         logging.debug(f"Date {date_arg} was not booked for {current_user} as "
                       "booking date is in the past")
         return jsonify(message="Booking date cannot be in the past"), 403
@@ -237,18 +243,3 @@ def get_num_bookings(start_date: str, period: str) -> int:
     logging.debug(f"Num bookings: {res} by {user_id} for start date: " 
                   f"{start_date}, period: {period}")
     return res
-
-
-def check_manage_perm(user_id: str) -> bool:
-    """
-    Returns True if the user with the supplied id has manage permissions, False
-    otherwise
-
-    Params
-    ------
-    user_id     The id of the user to check the permissions of
-    """
-    res = get_name_by_id(user_id)
-    perms = get_user_permissions(user_id)
-
-    return get_perm_by_name("manage") in perms
