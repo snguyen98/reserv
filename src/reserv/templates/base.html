@@ -22,6 +22,10 @@
             <li><a class="dropdown-item" href="{{ url_for('account.change_name') }}">Change Display Name</a></li>
             <li><a class="dropdown-item" href="{{ url_for('account.reset_password') }}">Reset Password</a></li>
             <div class="dropdown-divider"></div>
+            {% if g.manage_perm %}
+              <li><a class="dropdown-item" href="{{ url_for('admin.center') }}">Admin Center</a></li>
+              <div class="dropdown-divider"></div>
+            {% endif %}
             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
           </ul>
         </div>

@@ -73,6 +73,10 @@ def create_app():
     app.register_blueprint(account_bp)
     logging.info("Registered account view blueprint")
 
+    from .views.admin import admin_bp
+    app.register_blueprint(admin_bp)
+    logging.info("Registered admin view blueprint")
+
     # Registers the schedule handler for asynchronous requests
     from .handlers.schedule_handler import schedule_handler_bp
     app.register_blueprint(schedule_handler_bp)

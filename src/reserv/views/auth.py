@@ -5,7 +5,7 @@ from flask import Blueprint, request, session, g, jsonify
 from flask import render_template, flash, redirect, url_for
 from werkzeug.security import check_password_hash
 
-from ..data.query import get_user_by_id, get_user_status
+from ..data.query import get_user_by_id, get_user_status, check_perm
 from ..forms.login_form import Login
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -91,6 +91,8 @@ def load_logged_in_user():
     else:
         try:
             g.user = get_user_by_id(user_id)
+            g.book_perm = check_perm(id=user_id, perm="book")
+            g.manage_perm = check_perm(id=user_id, perm="manage")
 
         except Exception as err:
             logging.error(f"Error retrieving user, {user_id} from database " 
