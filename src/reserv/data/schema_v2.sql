@@ -1,10 +1,16 @@
-PRAGMA user_version = 1;
+PRAGMA user_version = 2;
 
 CREATE TABLE user (
-	"user_id"	TEXT NOT NULL UNIQUE,
-	"display_name"	TEXT UNIQUE,
-	"password"	TEXT,
-	"status"	TEXT NOT NULL DEFAULT "active" CHECK(
+	"user_id" TEXT NOT NULL UNIQUE,
+    "created_on" TEXT NOT NULL CHECK(date("created_on")) DEFAULT (
+        strftime('%Y-%m-%d %H:%M:%S', 'now')
+    ),
+    "updated_on" TEXT NOT NULL CHECK(date("updated_on")) DEFAULT (
+        strftime('%Y-%m-%d %H:%M:%S', 'now')
+    ),
+	"display_name" TEXT UNIQUE,
+	"password" TEXT,
+	"status" TEXT NOT NULL DEFAULT "active" CHECK(
 		status = "active" OR
 		status = "inactive" OR
 		status = "terminated"
@@ -58,3 +64,17 @@ INSERT OR IGNORE INTO role_permission (role_id, permission_id) VALUES
 (1, 1), (1, 3),
 (2, 2), (2, 3),
 (3, 3);
+
+CREATE TRIGGER user_updated_on_update
+    BEFORE UPDATE ON user
+BEGIN
+    UPDATE user
+    SET updated_on = strftime('%Y-%m-%d %H:%M:%S', 'now') 
+    WHERE user_id = old.user_id;
+END;
+
+CREATE TRIGGER user_created_on_immutable
+    BEFORE UPDATE OF created_on ON user
+BEGIN
+    SELECT RAISE(FAIL, "Created on is read only");
+END;
