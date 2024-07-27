@@ -174,6 +174,7 @@ def create_user(id, name, password, status):
     id              The user id of the user
     name            The display name of the user
     password        The password of the user
+    status          The status of the user (active, inactive or terminated)
     """
     hash_password = generate_password_hash(password)
 
