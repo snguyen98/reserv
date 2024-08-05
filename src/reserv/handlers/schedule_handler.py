@@ -2,8 +2,9 @@ from flask import Blueprint, request, jsonify, session, g
 from datetime import date, datetime, timedelta
 import logging
 
-from ..data.query import get_user_by_date, get_name_by_id, check_perm
-from ..data.query import create_booking, remove_booking, get_bookings_by_params
+from ..data.query import get_booking_by_date, get_name_by_id, check_perm
+from ..data.query import create_booking, update_booking, get_bookings_by_params
+from ..data.query import remove_booking
 from ..views.auth import login_required_ajax
 
 schedule_handler_bp = Blueprint(
@@ -18,15 +19,19 @@ def get_current_user():
     """
     Handler for returning the display name of the currently logged in user
     """
+    logging.info("Getting currently logged in user...")
+
     user_id = g.user["user_id"]
     res = get_name_by_id(user_id)
 
-    if not res[0] or res[0] == "":
+    if not res or res["display_name"] == "":
         logging.warning(f"No display name found for user, {user_id}")
         return jsonify(message="Logged in user has no display name"), 403
 
-    logging.debug(f"Found name, {res[0]} for id, {user_id}")
-    return jsonify(user=res[0]), 200
+    name = res["display_name"]
+
+    logging.debug(f"Found name, {name} for id, {user_id}")
+    return jsonify(user=name), 200
 
 
 @schedule_handler_bp.route("/check_perm", methods=["GET"])
@@ -65,20 +70,21 @@ def get_bookers():
 
     for date in dates_arg:
         try:
-            res_booker = get_user_by_date(date)
+            booking = get_booking_by_date(date)
 
-            if res_booker:
-                booker = res_booker[0]
+            if booking and booking["status"] == "booked":
+                booker = booking["user_id"]
                 res = get_name_by_id(booker)
 
-                if not res[0] or res[0] == "":
+                if not res or res["display_name"] == "":
                     logging.warning(f"No display name found for user, {booker}")
 
-                logging.debug(f"Found booker with name, {res[0]} for {date}")
+                name = res["display_name"]
+                logging.debug(f"Found booker with name, {name} for {date}")
                 bookings[date] = {
                     "isBooked": True,
-                    "booker": res[0],
-                    "bookPerm": res[0] == current_user
+                    "booker": name,
+                    "bookPerm": name == current_user
                 }
             
             else:
@@ -131,15 +137,26 @@ def set_booker():
 
     else:
         try:
-            create_booking(date=date_arg, id=current_user)
+            booking = get_booking_by_date(date_arg)
+
+            if booking:
+                if booking["status"] != 'booked':
+                    update_booking(date=date_arg, id=current_user)
+
+                else:
+                    logging.info(f"Could not book date {date_arg} for "
+                                 f"{current_user} as it is already booked")
+                    return jsonify(message="Date is already booked"), 403
+                
+            else:
+                create_booking(date=date_arg, id=current_user)
 
             logging.info(f"Booked date {date_arg} for {current_user}")
             return jsonify(message="Booked"), 200
             
         except Exception as err:
-            # Should handle if the date is already booked and any other errors
             logging.error(f"Error booking date {date_arg} for {current_user} "
-                          "with error, {err}")
+                          f"with error, {err}")
             return jsonify(message="Something went wrong with the request"), 500
 
 
@@ -161,22 +178,23 @@ def cancel_booking():
     
     else:
         try:
-            book_user = get_user_by_date(date_arg)
+            booking = get_booking_by_date(date_arg)
 
             # Checks if the date is booked
-            if book_user:
+            if booking:
+                booking_user = booking["user_id"]
                 # Checks if the user on the booking matches the user logged in
-                if curr_user == book_user[0] or check_perm(curr_user, "manage"):
-                    remove_booking(date_arg)
+                if curr_user == booking_user or check_perm(curr_user, "manage"):
+                    remove_booking(date=date_arg)
 
-                    logging.info(f"Cancelled booking by {book_user[0]} on "
+                    logging.info(f"Cancelled booking by {booking_user} on "
                                  f"{date_arg}")
                     return jsonify(message="Cancelled booking")
                 
                 else:
                     logging.debug(f"Booking on {date_arg} was not cancelled as "
                                   f"logged in user {curr_user} did not match"
-                                  f" booked user {book_user[0]}")
+                                  f" booked user {booking_user}")
                     return jsonify(
                         message="Something went wrong with the request"), 500
             
