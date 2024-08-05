@@ -15,8 +15,8 @@ def get_name_by_id(id: str) -> str:
     return res
 
 
-def get_user_by_date(date: str) -> str:
-    query = "SELECT user_id FROM schedule WHERE date = ?"
+def get_booking_by_date(date: str) -> str:
+    query = "SELECT user_id, status FROM schedule WHERE date = ?"
     db = get_db()
     res = db.execute(query, (date,)).fetchone()
 
@@ -44,8 +44,20 @@ def create_booking(date: str, id: str):
     db.commit()
 
 
+def update_booking(date: str, id: str):
+    query = """
+        UPDATE schedule SET
+        status = 'booked',
+        user_id = ?1
+        WHERE date = ?2
+    """
+    db = get_db()
+    db.execute(query, (id, date,))
+    db.commit()
+
+
 def remove_booking(date: str):
-    query = "DELETE FROM schedule WHERE date = ?"
+    query = "UPDATE schedule SET status = 'cancelled' WHERE date = ?"
     db = get_db()
     db.execute(query, (date,))
     db.commit()
@@ -59,6 +71,7 @@ def get_bookings_by_params(date: str, period: str, id: str) -> int:
         BETWEEN strftime('%s', ?1)
         AND strftime('%s', DATE(?1, ?2))
         AND user_id = ?3
+        AND status = 'booked'
     """
 
     db = get_db()
