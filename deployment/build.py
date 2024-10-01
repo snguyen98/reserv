@@ -62,7 +62,7 @@ def get_version(src_path: str) -> str:
     ------
     src_path        The path of the src folder
     """
-    version_path = os.path.join(src_path, f"{APP_NAME}/version.txt")
+    version_path = os.path.join(src_path, f"{APP_NAME}/app_version.txt")
 
     try:
         with open(version_path, "rt") as f:

@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, g
 from datetime import date, datetime, timedelta
 import logging
 
-from ..data.query import get_user_by_date, get_name_by_id
-from ..data.query import create_booking, remove_booking, get_bookings_by_params
+from ..data.query import get_booking_by_date, get_name_by_id, check_perm
+from ..data.query import create_booking, update_booking, get_bookings_by_params
+from ..data.query import remove_booking
+from ..views.auth import login_required_ajax
 
 schedule_handler_bp = Blueprint(
     "schedule_handler",
@@ -11,37 +13,102 @@ schedule_handler_bp = Blueprint(
     url_prefix="/handlers"
 )
 
-@schedule_handler_bp.route("/get_booker", methods=["GET"])
-def get_booker():
+@schedule_handler_bp.route("/get_current_user", methods=["GET"])
+@login_required_ajax
+def get_current_user():
     """
-    Handler for returning the display name of the booker assigned to the date
-    supplied by the request
+    Handler for returning the display name of the currently logged in user
     """
-    date_arg = request.args.get('date')
+    logging.info("Getting currently logged in user...")
+
+    user_id = g.user["user_id"]
+    res = get_name_by_id(user_id)
+
+    if not res or res["display_name"] == "":
+        logging.warning(f"No display name found for user, {user_id}")
+        return jsonify(message="Logged in user has no display name"), 403
+
+    name = res["display_name"]
+
+    logging.debug(f"Found name, {name} for id, {user_id}")
+    return jsonify(user=name), 200
+
+
+@schedule_handler_bp.route("/check_perm", methods=["GET"])
+@login_required_ajax
+def check_user_perm():
+    """
+    Handler for returning True if the currently logged in user has the manage
+    permission, False otherwise
+    """
+    user_id = g.user["user_id"]
+    perm = request.args.get('perm')
 
     try:
-        res_booker = get_user_by_date(date_arg)
+        res = check_perm(user_id, perm)
+        logging.info(f"User {user_id} has {perm} permissions: {res}")
 
-        if res_booker:
-            booker_id = res_booker[0]
-            res = get_name_by_id(booker_id)
-
-            if not res[0] or res[0] == "":
-                logging.warning(f"No display name found for user, {booker_id}")
-
-            logging.debug(f"Found booker with name, {res[0]} for {date_arg}")
-            return jsonify(isBooked=True, booker=res[0])
-        
-        else:
-            logging.debug(f"No booker found for {date_arg}")
-            return jsonify(isBooked=False, booker="")
+        return jsonify(res=res), 200
 
     except Exception as err:
-        logging.error(f"Error retrieving booker for {date_arg}, {err}")
-        return jsonify(isBooked=False, booker="")
+        logging.error(f"Error when checking permissions for user, {user_id}")
+        return jsonify(message="Logged in user has no display name"), 500
+
+
+@schedule_handler_bp.route("/get_bookers", methods=["GET"])
+@login_required_ajax
+def get_bookers():
+    """
+    Handler for returning the display name of the booker assigned to each date
+    in the list supplied by the request
+    """
+    current_user = session.get('user_id')
+    dates_arg = request.args.getlist("date_list[]")
+    bookings = {}
+
+    logging.debug(f"Getting bookers for {dates_arg}")
+
+    for date in dates_arg:
+        try:
+            booking = get_booking_by_date(date)
+
+            if booking and booking["status"] == "booked":
+                booker = booking["user_id"]
+                res = get_name_by_id(booker)
+
+                if not res or res["display_name"] == "":
+                    logging.warning(f"No display name found for user, {booker}")
+
+                name = res["display_name"]
+                logging.debug(f"Found booker with name, {name} for {date}")
+                bookings[date] = {
+                    "isBooked": True,
+                    "booker": name,
+                    "bookPerm": name == current_user
+                }
+            
+            else:
+                logging.debug(f"No booker found for {date}")
+                bookings[date] = {
+                    "isBooked": False,
+                    "booker": "",
+                    "bookPerm": False
+                }
+
+        except Exception as err:
+            logging.error(f"Error retrieving booker for {date}, {err}")
+            bookings[date] = {
+                "isBooked": False,
+                "booker": "",
+                "bookPerm": False
+            }
+    
+    logging.debug(f"Sending: {bookings}")
+    return jsonify(res=bookings)
     
 
 @schedule_handler_bp.route("/set_booker", methods=["GET"])
+@login_required_ajax
 def set_booker():
     """
     Handler for setting the booker to the currently logged in user to the date
@@ -50,11 +117,13 @@ def set_booker():
     date_arg = request.args.get('date')
     current_user = session.get('user_id')
 
-    # Checks if the booking is valid first
-    if session.get("user_id") is None:
-        logging.debug(f"Date {date_arg} was not booked as no user is logged in")
-        return jsonify(message="Not logged in"), 403
-
+    # Checks if they have valid permissions to book
+    if not check_perm(current_user, "book"):
+        logging.debug(f"{current_user} could not book {date_arg} as they don't "
+                      "have book permissions")
+        return jsonify(message="You do not have permission to book, please log "
+                       "in as a user"), 403
+    # Checks if the booking is valid
     elif datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
         logging.debug(f"Date {date_arg} was not booked for {current_user} as "
                       "booking date is in the past")
@@ -68,55 +137,64 @@ def set_booker():
 
     else:
         try:
-            create_booking(date=date_arg, id=current_user)
+            booking = get_booking_by_date(date_arg)
+
+            if booking:
+                if booking["status"] != 'booked':
+                    update_booking(date=date_arg, id=current_user)
+
+                else:
+                    logging.info(f"Could not book date {date_arg} for "
+                                 f"{current_user} as it is already booked")
+                    return jsonify(message="Date is already booked"), 403
+                
+            else:
+                create_booking(date=date_arg, id=current_user)
 
             logging.info(f"Booked date {date_arg} for {current_user}")
             return jsonify(message="Booked"), 200
             
         except Exception as err:
-            # Should handle if the date is already booked and any other errors
             logging.error(f"Error booking date {date_arg} for {current_user} "
-                          "with error, {err}")
+                          f"with error, {err}")
             return jsonify(message="Something went wrong with the request"), 500
 
 
 @schedule_handler_bp.route("/cancel_booking", methods=["GET"])
+@login_required_ajax
 def cancel_booking():
     """
     Handler for cancelling the booking on the supplied date if the booker 
     matches the currently logged in user
     """
     date_arg = request.args.get('date')
-    current_user = session.get('user_id')
+    curr_user = session.get('user_id')
 
     # Checks if the date can be cancelled first
-    if current_user is None:
-        logging.debug(f"Date {date_arg} was not cancelled, no user logged in")
-        return jsonify(message="Not logged in"), 403
-    
-    elif datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
-        logging.debug(f"Date {date_arg} was not cancelled for {current_user} " 
+    if datetime.strptime(date_arg, "%Y-%m-%d").date() < date.today():
+        logging.debug(f"Date {date_arg} was not cancelled for {curr_user} " 
                       "as cancel date is in the past")
         return jsonify(message="Cancel date cannot be in the past"), 403
     
     else:
         try:
-            booked_user = get_user_by_date(date_arg)
+            booking = get_booking_by_date(date_arg)
 
             # Checks if the date is booked
-            if booked_user:
+            if booking:
+                booking_user = booking["user_id"]
                 # Checks if the user on the booking matches the user logged in
-                if current_user == booked_user[0]:
-                    remove_booking(date_arg)
+                if curr_user == booking_user or check_perm(curr_user, "manage"):
+                    remove_booking(date=date_arg)
 
-                    logging.info(f"Cancelled booking by {booked_user[0]} on "
+                    logging.info(f"Cancelled booking by {booking_user} on "
                                  f"{date_arg}")
                     return jsonify(message="Cancelled booking")
                 
                 else:
                     logging.debug(f"Booking on {date_arg} was not cancelled as "
-                                  f"logged in user {current_user} did not match"
-                                  f" booked user {booked_user[0]}")
+                                  f"logged in user {curr_user} did not match"
+                                  f" booked user {booking_user}")
                     return jsonify(
                         message="Something went wrong with the request"), 500
             
