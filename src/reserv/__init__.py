@@ -9,6 +9,9 @@ from reserv.tools.log_filters import ConsoleFilter, WebRequestFilter
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
 
+    from flask_wtf.csrf import CSRFProtect
+    csrf = CSRFProtect(app)
+
     # Create instance folder if it doesn't exist
     try:
         os.makedirs(app.instance_path)
