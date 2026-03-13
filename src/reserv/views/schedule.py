@@ -26,7 +26,12 @@ def index():
 
         logging.debug(f"Set schedule for w/c {week_start}")
 
-        g.users = get_users_by_role("user")
+        all_users = get_users_by_role("user")
+
+        g.users = sorted(
+            all_users, 
+            key=lambda u: u[0] != g.user["user_id"]
+        )
 
         logging.debug(f"Found users with user role: {g.users}")
 
