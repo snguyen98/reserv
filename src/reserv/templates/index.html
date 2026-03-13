@@ -1,73 +1,109 @@
 {% extends 'base.html' %}
 
-{% block header %}
-  <h1>{% block title %}Schedule{% endblock %}</h1>
-{% endblock %}
-
 {% block content %}
-  <div class="table-responsive">
-    <table id="schedule-table" class="table table-sm">
-      <thead class="table-dark">
-        <tr>
-          <th scope="col" class="col-1"><div class="cell-content">Mon</div></th>
-          <th scope="col" class="col-1"><div class="cell-content">Tue</div></th>
-          <th scope="col" class="col-1"><div class="cell-content">Wed</div></th>
-          <th scope="col" class="col-1"><div class="cell-content">Thu</div></th>
-          <th scope="col" class="col-1"><div class="cell-content">Fri</div></th>
-          <th scope="col" class="col-1"><div class="cell-content">Sat</div></th>
-          <th scope="col" class="col-1"><div class="cell-content">Sun</div></th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Loops through the dates in g.schedule to generate the table -->
-        {% set date_list = g.schedule %}
-        {% for i in range((date_list|length / 7)|round(method="ceil")|int) %}
-          <tr>
-            {% for j in range(7) %}
-              {% set index = (i * 7) + j %}
-              <td id={{ date_list[index] }} class="schedule-cell" data-booker="">
-                <div class="cell-content">
-                  <p class="cell-text">
-                    <!-- Highlights today's date in bold -->
-                    {% if g.today == date_list[index] %}<strong>{% endif %}
-                      {{ date_list[index].strftime('%d %b') }}
-                    {% if g.today == date_list[index] %}</strong>{% endif %}
-                  </p>
-                </div>
-              </td>
-            {% endfor %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 fw-bold text-dark">Schedule</h1>
+    <span class="text-muted small">{{ g.today.strftime('%A, %d %B %Y') }}</span>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="table-responsive rounded-3">
+      <table id="schedule-table" class="table table-bordered mb-0">
+        <thead>
+          <tr class="bg-dark text-white text-center">
+            <th class="py-3 fw-medium">Mon</th>
+            <th class="py-3 fw-medium">Tue</th>
+            <th class="py-3 fw-medium">Wed</th>
+            <th class="py-3 fw-medium">Thu</th>
+            <th class="py-3 fw-medium">Fri</th>
+            <th class="py-3 fw-medium">Sat</th>
+            <th class="py-3 fw-medium">Sun</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% set date_list = g.schedule %}
+          {% for i in range((date_list|length / 7)|round(method="ceil")|int) %}
+            <tr>
+              {% for j in range(7) %}
+                {% set index = (i * 7) + j %}
+                <td id="{{ date_list[index] }}" class="schedule-cell p-0" data-booker="">
+                  <div class="cell-content d-flex flex-column align-items-center justify-content-center">
+                    <span class="cell-text {{ 'today-highlight' if g.today == date_list[index] }}">
+                      {{ date_list[index].strftime('%d') }}
+                    </span>
+                    <small class="text-muted" style="font-size: 0.65rem;">{{ date_list[index].strftime('%b') }}</small>
+                  </div>
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-  <div class="d-flex flex-row">
-    <div id="schedule-info" class="schedule-card card flex-fill">
-      <div class="card-body">
-        <div id="display-info">
-          <h5 id="info-title" class="card-title"></h5>
-          <p id="info-booker" class="card-text pt-2"></p>
-          {% if g.book_perm %}
-            <button id="book-btn" type="button" class="btn btn-primary">Book</button>
-          {% endif %}
-          {% if g.book_perm or g.manage_perm %}
-            <button id="cancel-btn" type="button" class="btn btn-danger">Cancel</button>
-            {% endif %}
-        </div>
-        <div id="display-blank">
-          <h5 id="info-title" class="card-title">No date selected</h5>
-          <p id="info-booker" class="card-text pt-2">Click or hover over a date to view more details</p>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div id="schedule-info" class="card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column">
+          <div id="display-info" style="display: none;"> <h5 id="info-title" class="card-title fw-bold text-primary"></h5>
+            <p id="info-booker" class="card-text text-muted mb-4"></p>
+            <div class="mt-auto">
+              {% if g.book_perm %}
+                <form id="book-form" onsubmit="return false;">
+                  <button type="submit" id="book-btn" class="btn btn-primary px-4 rounded-pill">Book</button>
+                </form>
+              {% endif %}
+              {% if g.book_perm or g.manage_perm %}
+                <form id="cancel-form" onsubmit="return false;">
+                  <button type="submit" id="cancel-btn" class="btn btn-danger px-4 rounded-pill">Cancel</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+          <div id="display-blank" class="my-auto text-center py-4">
+            <i class="bi bi-calendar-event text-light" style="font-size: 2rem;"></i>
+            <h5 class="text-secondary mt-2">No date selected</h5>
+            <p class="text-muted small">Click a date to view details</p>
+          </div>
         </div>
       </div>
     </div>
-    <div id="schedule-upcoming" class="schedule-card card flex-fill">
-      <div class="card-body">
-        <h5 class="card-title">Upcoming</h5>
-        <p id="upcoming-body" class="card-text pt-2">
-          <span id="upcoming-date"></span><span> - </span><span id="upcoming-booker"></span>
-        </p>
-        <p id="upcoming-blank" class="card-text pt-2">No upcoming bookings</p>
+
+    <div class="col-md-6">
+      <div id="schedule-availability" class="card shadow-sm border-0 h-100">
+        <div id="availability-content" style="display: none;">
+          <div class="card-header bg-white py-3 border-0">
+            <h5 class="card-title mb-0 fw-bold">Availability</h5>
+          </div>
+          <ul id="availability-list" class="list-group list-group-flush scroll-area">
+            {% for user_id, user_name in g.users %}
+              {% set is_self = user_id == g.user.user_id %}
+              <li id="availability-{{ user_id }}" class="list-group-item d-flex align-items-center py-3 {{ 'user-self' if is_self }}">
+                <span class="status-indicator active me-3"></span>
+                <div class="flex-grow-1">
+                  <span class="username">
+                    {{ user_name }}
+                  </span>
+                  {% if is_self %}
+                    <span class="badge-you">YOU</span>
+                  {% endif %}
+                </div>
+                {% if is_self %}
+                  <button id="availability-btn" class="btn btn-xs btn-outline-primary rounded-pill px-3">Toggle</button>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div id="availability-blank" class="my-auto text-center py-4">
+          <i class="bi bi-calendar-event text-light" style="font-size: 2rem;"></i>
+          <h5 class="text-secondary mt-2">No date selected</h5>
+          <p class="text-muted small">Click a date to view availability</p>
+        </div>
       </div>
     </div>
   </div>
+</div>
 {% endblock %}

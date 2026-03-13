@@ -1,4 +1,15 @@
 $(document).ready(function() {
+    // CSRF Header Setup
+    var csrf_token = $('meta[name=csrf-token]').attr('content');
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
+    });
+
     if (window.location.pathname == '/') {
         const UNBOOKED_TEXT = "Available";
 
@@ -21,16 +32,16 @@ $(document).ready(function() {
         /*
         * Defines the action for clicking the book button
         */
-        $("#book-btn").on("click", function() {
+        $("#book-form").on("submit", function() {
             console.info("Booking date: " + selected_id);
-            
-            // Perform an ajax call to the server to book the selected date
-            $.getJSON({
+
+            $.ajax({
                 url: "/handlers/set_booker",
-                data: { "date": selected_id },
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ "date": selected_id }),
                 success: function() {
                     console.info(`Successfully booked date: ${selected_id}`);
-                    // Update to display the new booking
                     updateSchedule();
                 },
                 error: function(xhr) {
@@ -45,23 +56,53 @@ $(document).ready(function() {
         });
 
         /*
-        * Defines the action for clicking the book button
+        * Defines the action for clicking the cancel button
         */
-        $("#cancel-btn").on("click", function() {
-            console.info("Cancelling date: " + selected_id)
-            $.getJSON({
+        $("#cancel-form").on("submit", function() {
+            console.info("Cancelling date: " + selected_id);
+
+            $.ajax({
                 url: "/handlers/cancel_booking",
-                data: { "date": selected_id },
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ "date": selected_id }),
                 success: function() {
                     console.info(`Successfully cancelled date: ${selected_id}`);
-                    // Update to display the cancelled booking
+                    updateSchedule();
+                },
+                error: function(xhr) {
+                    // Displays the error to the user as an message box
+                    var msg = JSON.parse(xhr.responseText).message;
+                    alert(msg);
+                    
+                    console.error(`Error cancelling date: ${selected_id}, ${msg}`);
+                    updateSchedule();
+                }
+            });
+        });
+
+        /*
+        * Handles the availability toggle button
+        */
+        $("#availability-list").on("click", "#availability-btn", function() {
+            // Pass the user_id (you can store this in a data-attribute on the button)
+            let uid = $(this).data("user-id"); 
+            console.info("Toggling availability for date: " + selected_id + ", user_id: " + uid);
+            
+            $.ajax({
+                url: "/handlers/toggle_availability",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ "date": selected_id, "user_id": uid }),
+                success: function() {
+                    console.info(`Successfully toggled availability for user_id: ${uid}`);
                     updateSchedule();
                 },
                 error: function(xhr) {
                     var msg = JSON.parse(xhr.responseText).message;
                     alert(msg);
 
-                    console.error(`Error cancelling date: ${selected_id}, ${msg}`);
+                    console.error(`Error toggling availability for user_id: ${uid}, ${msg}`);
                     updateSchedule();
                 }
             });
@@ -93,6 +134,9 @@ $(document).ready(function() {
             // Update selected_id global variable
             selected_id = $(this).attr('id');
 
+            displayInfo(selected_id);
+            displayAvailability(selected_id);
+
             //console.debug("Date selected: " + selected_id);
         });
 
@@ -118,19 +162,20 @@ $(document).ready(function() {
 
                     for (const date in bookings) {
                         var cell_id = "#" + date;
+                        var cellData = bookings[date];
+                        $(cell_id).data("unavailable-users", cellData.unavailable);
                         
                         // Sets custom html data attribute for booker
-                        $(cell_id).data("booker", bookings[date].booker);
+                        $(cell_id).data("booker", cellData.booker);
 
-                        if (bookings[date].isBooked) {
-                            // Makes the cell red
+                        $(cell_id).removeClass("table-danger table-success table-warning");
+
+                        if (cellData.hasUnavailable) {
+                            $(cell_id).addClass("table-warning"); 
+                        } else if (cellData.isBooked) {
                             $(cell_id).addClass("table-danger");
-                            $(cell_id).removeClass("table-success");
-                        }
-                        else {
-                            // Makes the cell green
+                        } else {
                             $(cell_id).addClass("table-success");
-                            $(cell_id).removeClass("table-danger");
                         }
                     }
                     displaySelected();          // Refreshes the info card
@@ -151,9 +196,6 @@ $(document).ready(function() {
         * Finds the next booked date from today
         */
         function findNextBooking() {
-            // Gets a Date object for today without the time
-            var today = new Date(new Date().toDateString());
-
             // Loops through each cell
             $('.schedule-cell').each(function() {
                 var cell_date = new Date($(this).attr('id'));
@@ -185,6 +227,7 @@ $(document).ready(function() {
             // 
             if (selected_id != "" && selected_id != null) {
                 displayInfo(selected_id);
+                displayAvailability(selected_id);
             }
             else {
                 // Shows the blank info card if no cell is selected
@@ -241,6 +284,48 @@ $(document).ready(function() {
                     $("#book-btn").hide();
                 }
             }
+        }
+
+        /*
+        * Updates the status dots and text opacity based on availability
+        */
+        function displayAvailability(cell_date) {
+            // Hides the blank card
+            $("#availability-content").show();
+            $("#availability-blank").hide();
+
+            // 1. Retrieve the unavailable list for the selected date
+            // We can piggyback on the data already stored in the cell during updateSchedule()
+            var unavailableList = $("#" + cell_date).data("unavailable-users") || [];
+
+            console.debug("Unavailable users for date: "+ cell_date + ", users: " + unavailableList);
+
+            // 2. Loop through each user in the list
+            $("#availability-list .list-group-item").each(function() {
+                // Extract the user_id from the LI ID (e.g., availability-5)
+                var userId = $(this).attr('id').replace('availability-', '');
+                
+                var isUnavailable = unavailableList.includes(userId);
+
+                console.log("--- DEBUG ---");
+                console.log("Looking for:", JSON.stringify(userId));
+                console.log("Inside Array:", JSON.stringify(unavailableList));
+                console.log("Found:", unavailableList.includes(userId));
+                console.log("Index:", unavailableList.indexOf(userId));
+
+                var dot = $(this).find(".status-indicator");
+                var nameText = $(this).find(".username");
+
+                if (isUnavailable) {
+                    // Mark as Inactive/Gray
+                    dot.removeClass("active").addClass("inactive");
+                    nameText.addClass("text-muted").removeClass("text-dark");
+                } else {
+                    // Mark as Active/Green
+                    dot.removeClass("inactive").addClass("active");
+                    nameText.addClass("text-dark").removeClass("text-muted");
+                }
+            });
         }
         
         /*

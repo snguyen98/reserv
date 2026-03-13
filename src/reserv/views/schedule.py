@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import logging
 
 from .auth import login_required_view
-from ..data.query import check_perm
+from ..data.query import check_perm, get_users_by_role
 
 schedule_bp = Blueprint("schedule", __name__)
 
@@ -24,7 +24,11 @@ def index():
         # Generates a list of dates from the week start for the next 14 days
         g.schedule = [week_start + timedelta(days=i) for i in range(14)]
 
-        logging.debug(f"Setting schedule for w/c {week_start}")
+        logging.debug(f"Set schedule for w/c {week_start}")
+
+        g.users = get_users_by_role("user")
+
+        logging.debug(f"Found users with user role: {g.users}")
 
         return render_template('index.html')
     
