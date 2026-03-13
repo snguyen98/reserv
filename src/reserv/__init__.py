@@ -29,8 +29,6 @@ def create_app():
     with open(config_path, "r") as f:
         config = yaml.safe_load(f.read())
 
-    app.config["app"] = config["app"]
-
     # Create log folder if doesn't exist and configured to log to a file
     try:
         log_folder = os.path.dirname(
@@ -61,9 +59,16 @@ def create_app():
     
     # Configures the app based on config params
     app.config.from_mapping(
+        APP_TITLE=config["app_title"],
         SECRET_KEY = key,
-        DATABASE = os.path.join(app.instance_path, config["db_path"])
+        DATABASE = os.path.join(app.instance_path, config["db_path"]),
+        APP = config["app"]
     )
+
+    @app.context_processor
+    def inject_app_name():
+        # This makes 'APP_TITLE' available as a variable in all Jinja templates
+        return dict(APP_TITLE=app.config.get('APP_TITLE', 'Reserv'))
 
     logging.info("Started app")
 

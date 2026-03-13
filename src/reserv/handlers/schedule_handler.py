@@ -222,8 +222,8 @@ def validate_booking(date_str: str) -> bool:
     """
     date = datetime.strptime(date_str, "%Y-%m-%d").date()
     # The query excludes the booking date itself so it validates a 7 day period
-    period = current_app.config["APP"]["bookingPeriod"]
-    max_bookings = current_app.config["APP"]["maxBookings"]
+    period = current_app.config["APP"]["booking_period"]
+    max_bookings = current_app.config["APP"]["max_bookings"]
 
     logging.debug(f"Validating bookings from {date_str} for {period}...")
 
