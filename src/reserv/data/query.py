@@ -80,6 +80,64 @@ def get_bookings_by_params(date: str, period: str, id: str) -> int:
     return res
 
 
+def get_dates_by_availability(status: str, date_list: list) -> list:
+    # Use placeholders (?) for each date in the list
+    placeholders = ','.join(['?'] * len(date_list))
+    query = f"""
+        SELECT date 
+        FROM availability 
+        WHERE status = ? 
+        AND date IN ({placeholders})
+    """
+    
+    db = get_db()
+    # Combine the status and the list of dates for the execution
+    params = [status] + date_list
+    res = db.execute(query, params).fetchall()
+
+    return [row[0] for row in res]
+
+
+def get_unavailable_users_by_date(date: str) -> str:
+    query = f"""
+        SELECT user_id 
+        FROM availability 
+        WHERE status = 'unavailable' AND date = ?
+    """
+    db = get_db()
+    # Combine the status and the list of dates for the execution
+    res = db.execute(query, (date,)).fetchall()
+
+    return [row[0] for row in res]
+
+
+def get_user_availability_by_date(date: str, user_id: str) -> str:
+    query = "SELECT status FROM availability WHERE date = ?1 AND user_id = ?2"
+    db = get_db()
+    res = db.execute(query, (date,user_id,)).fetchone()
+
+    return res
+
+
+def create_user_availability(date: str, id: str):
+    query = "INSERT INTO availability (date, user_id) VALUES (?,?)"
+    db = get_db()
+    db.execute(query, (date, id))
+    db.commit()
+
+
+def update_user_availability(date: str, id: str, status: str):
+    query = """
+        UPDATE availability SET
+        status = ?1,
+        user_id = ?2
+        WHERE date = ?3
+    """
+    db = get_db()
+    db.execute(query, (status, id, date,))
+    db.commit()
+
+
 def get_user_status(id: str) -> str:
     query = "SELECT status FROM user WHERE user_id = ?"
 
@@ -113,6 +171,20 @@ def get_user_permissions(id: str) -> set:
         perms.update(role_perms)
 
     return perms
+
+
+def get_users_by_role(role: str) -> list:
+    query = """
+        SELECT u.user_id, u.display_name
+        FROM user u
+        INNER JOIN user_role ur ON u.user_id = ur.user_id
+        INNER JOIN role r ON ur.role_id = r.id
+        WHERE r.name = ?
+    """
+    db = get_db()
+    res = db.execute(query, (role,)).fetchall()
+
+    return [(user[0], user[1]) for user in res]
 
 
 def get_perm_by_name(name: str) -> int:
