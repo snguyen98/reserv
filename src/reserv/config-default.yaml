@@ -1,6 +1,10 @@
 key_path: app.key
 db_path: data/schedule.db
 
+app:
+    bookingPeriod: 7
+    maxBookings: 2
+
 logging:
     version: 1
     disable_existing_loggers: False

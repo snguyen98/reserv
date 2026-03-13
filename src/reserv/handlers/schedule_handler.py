@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, g
+from flask import Blueprint, request, jsonify, session, g, current_app
 from datetime import date, datetime, timedelta
 import logging
 
@@ -222,7 +222,8 @@ def validate_booking(date_str: str) -> bool:
     """
     date = datetime.strptime(date_str, "%Y-%m-%d").date()
     # The query excludes the booking date itself so it validates a 7 day period
-    period = 6
+    period = current_app["app"]["bookingPeriod"]
+    max_bookings = current_app["app"]["maxBookings"]
 
     logging.debug(f"Validating bookings from {date_str} for {period}...")
 
@@ -234,7 +235,7 @@ def validate_booking(date_str: str) -> bool:
         num_bookings = get_num_bookings(start_date=start_date_str, 
                                         period=f"{period} days")
         
-        if num_bookings >= 2:
+        if num_bookings >= max_bookings:
             return False
 
     return True

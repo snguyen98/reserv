@@ -29,6 +29,8 @@ def create_app():
     with open(config_path, "r") as f:
         config = yaml.safe_load(f.read())
 
+    app.config["app"] = config["app"]
+
     # Create log folder if doesn't exist and configured to log to a file
     try:
         log_folder = os.path.dirname(
