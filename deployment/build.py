@@ -31,7 +31,7 @@ def create_build(dest_path: str, src_path: str, temp_path: str):
         logging.error(f"Could not create a zipped archive of the app, {err}")
         sys.exit()
 
-def create_release(dest_path: str, temp_path: str, script_path: str, version: str):
+def create_release(dest_path: str, temp_path: str, script_path: str, requirements_path: str, version: str):
     """
     Copy deploy script to temp folder and archive into a zip file with the build
 
@@ -44,6 +44,7 @@ def create_release(dest_path: str, temp_path: str, script_path: str, version: st
     """
     try:
         shutil.copy(script_path, temp_path)
+        shutil.copy(requirements_path, temp_path)
         shutil.make_archive(base_name=os.path.join(dest_path, f"{APP_NAME}-release-{version}"), format="zip", root_dir=temp_path)
         logging.info(f"Created app release for version {version}")
 
@@ -182,6 +183,7 @@ if __name__ == "__main__":
     # Define paths to directories
     temp_path = os.path.join(current_dir, "temp")
     script_path = os.path.join(current_dir, "deploy.py")
+    requirements_path = os.path.join(current_dir, "../requirements.txt")
     src_path = args["src"]
     log_path = args["log"]
 
@@ -195,5 +197,11 @@ if __name__ == "__main__":
 
         clear_working_folders([dest_path, temp_path])
         create_build(dest_path=dest_path, src_path=src_path, temp_path=temp_path)
-        create_release(dest_path=dest_path, script_path=script_path, temp_path=temp_path, version=version)
+        create_release(
+            dest_path=dest_path,
+            script_path=script_path,
+            requirements_path=requirements_path,
+            temp_path=temp_path, 
+            version=version
+        )
         generate_readme(dest_path)
