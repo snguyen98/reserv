@@ -35,7 +35,7 @@ CREATE TABLE schedule (
 );
 
 CREATE TABLE availability (
-    "date"	TEXT NOT NULL CHECK(date("date") IS NOT NULL) UNIQUE,
+    "date"	TEXT NOT NULL CHECK(date("date") IS NOT NULL),
     "created_on" TEXT NOT NULL CHECK(date("created_on")) DEFAULT (
         strftime('%Y-%m-%d %H:%M:%S', 'now')
     ),
@@ -47,7 +47,7 @@ CREATE TABLE availability (
         status = "available" OR
         status = "unavailable"
     ),
-	PRIMARY KEY("date", "user_id")
+	PRIMARY KEY(date, user_id)
 );
 
 

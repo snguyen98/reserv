@@ -129,12 +129,11 @@ def create_user_availability(date: str, id: str):
 def update_user_availability(date: str, id: str, status: str):
     query = """
         UPDATE availability SET
-        status = ?1,
-        user_id = ?2
-        WHERE date = ?3
+        status = ?1
+        WHERE date = ?2 AND user_id = ?3
     """
     db = get_db()
-    db.execute(query, (status, id, date,))
+    db.execute(query, (status, date, id,))
     db.commit()
 
 
