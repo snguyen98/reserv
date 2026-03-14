@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, g
+from flask import render_template, Blueprint, g, current_app
 from datetime import date, timedelta
 import logging
 
@@ -21,8 +21,10 @@ def index():
         # Calculates the date of the monday of the current week
         week_start = g.today + timedelta(days=-g.today.weekday(), weeks=0)
 
-        # Generates a list of dates from the week start for the next 14 days
-        g.schedule = [week_start + timedelta(days=i) for i in range(14)]
+        display_days = 7 * current_app.config["APP"]["display_weeks"]
+
+        # Generates a list of dates from the week start for the next number of weeks in the config
+        g.schedule = [week_start + timedelta(days=i) for i in range(display_days)]
 
         logging.debug(f"Set schedule for w/c {week_start}")
 

@@ -3,6 +3,7 @@ key_path: app.key
 db_path: data/schedule.db
 
 app:
+    display_weeks: 4
     booking_period: 7
     max_bookings: 2
 
