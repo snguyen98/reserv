@@ -18,3 +18,5 @@ config.yaml
 
 # Ignore instance folder
 instance/
+
+.DS_STORE

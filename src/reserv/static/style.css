@@ -1,37 +1,107 @@
-td .cell-content {
-    aspect-ratio: 1 / 1;
+:root {
+    --primary-blue: #0d6efd;
+    --border-color: #eef2f7;
+    --bg-hover: #f8faff;
 }
 
-#content {
-    margin-top: 30px;
-    width: 75%;
-    margin-left: auto;
-    margin-right: auto;
+/* Page Layout */
+body { background-color: #f5f7fb; }
+.container { max-width: 1000px; }
+
+/* Calendar Styling */
+#schedule-table { border: none; overflow: hidden; }
+#schedule-table th { border: none; font-size: 0.85rem; letter-spacing: 0.5px; }
+
+.schedule-cell {
+    height: 90px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-color: var(--border-color) !important;
+    background: white;
 }
 
-#schedule-table td:hover {
-    background-color: rgba(220, 220, 220, 0.768);
+.schedule-cell:hover {
+    background-color: var(--bg-hover);
+    transform: scale(1.02);
+    z-index: 2;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
+
+.cell-content { height: 100%; }
+
+.today-highlight {
+    background: var(--primary-blue);
+    color: white;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: bold;
+}
+
+/* Selected State */
+.selected-cell {
+    background-color: #e7f1ff !important;
+    border: 2px solid var(--primary-blue) !important;
+}
+
+/* Availability Styles */
+
+.badge-you {
+    font-size: 0.6rem;
+    background: #e0ebff;
+    color: var(--primary-blue);
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.active {
+    background: #2ecc71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+}
+
+.status-indicator.inactive {
+    background-color: #cbd5e0; /* Gray */
+    box-shadow: none;
+}
+
+.list-group-item .username.text-muted {
+    text-decoration: line-through; /* Optional: clear visual indicator */
+    opacity: 0.6;
+}
+
+/* Buttons and Scroll */
+.btn-xs { padding: 0.2rem 0.6rem; font-size: 0.75rem; }
+
+.scroll-area {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Utility to hide/show info */
+.d-none { display: none !important; }
 
 #schedule-table {
-    border: 3px solid black;
-    box-sizing: border-box;
+    table-layout: fixed; /* Forces columns to respect width */
+    width: 100%;
 }
 
-.schedule-card {
-    width: 50%;
-    height: 165px;
+#schedule-table th, #schedule-table td {
+    width: 14.28%; /* 100% / 7 days */
 }
 
-#schedule-info {
-    margin-right: 15px;
-}
-
-.selected-cell {
-    outline: 2px solid black;
-    box-sizing: border-box;
-}
-
-.navbar {
-    height: 55px;
+.cell-content {
+    height: 90px;
+    padding: 10px;
 }

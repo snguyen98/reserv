@@ -9,6 +9,9 @@ from reserv.tools.log_filters import ConsoleFilter, WebRequestFilter
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
 
+    from flask_wtf.csrf import CSRFProtect
+    csrf = CSRFProtect(app)
+
     # Create instance folder if it doesn't exist
     try:
         os.makedirs(app.instance_path)
@@ -56,9 +59,16 @@ def create_app():
     
     # Configures the app based on config params
     app.config.from_mapping(
+        APP_TITLE=config["app_title"],
         SECRET_KEY = key,
-        DATABASE = os.path.join(app.instance_path, config["db_path"])
+        DATABASE = os.path.join(app.instance_path, config["db_path"]),
+        APP = config["app"]
     )
+
+    @app.context_processor
+    def inject_app_name():
+        # This makes 'APP_TITLE' available as a variable in all Jinja templates
+        return dict(APP_TITLE=app.config.get('APP_TITLE', 'Reserv'))
 
     logging.info("Started app")
 
