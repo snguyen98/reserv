@@ -1,4 +1,4 @@
-PRAGMA user_version = 2;
+PRAGMA user_version = 3;
 
 CREATE TABLE user (
 	"user_id" TEXT NOT NULL UNIQUE,
